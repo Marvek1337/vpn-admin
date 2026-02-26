@@ -1,0 +1,65 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  USER
+}
+
+model User {
+  id           String   @id @default(uuid())
+  login        String   @unique
+  passwordHash String
+  role         Role     @default(USER)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model Server {
+  id                     String         @id @default(uuid())
+  name                   String
+  description            String?
+  host                   String
+  sshPort                Int
+  sshUsername            String
+  sshPasswordEnc         String
+  wgEasyUrl              String
+  wgEasyUsername         String
+  wgEasyPasswordEnc      String
+  metricsPollIntervalSec Int            @default(30)
+  wgPollIntervalSec      Int            @default(60)
+  lastSshOk              Boolean        @default(false)
+  lastWgOk               Boolean        @default(false)
+  lastErrorMessage       String?
+  lastMetricsAt          DateTime?
+  lastWgSyncAt           DateTime?
+  createdAt              DateTime       @default(now())
+  updatedAt              DateTime       @updatedAt
+  metrics                ServerMetric[]
+}
+
+model ServerMetric {
+  id            String   @id @default(uuid())
+  serverId      String
+  server        Server   @relation(fields: [serverId], references: [id], onDelete: Cascade)
+  ts            DateTime @default(now())
+  cpuPercent    Float
+  ramUsedBytes  BigInt
+  ramTotalBytes BigInt
+  diskUsedBytes BigInt
+  diskTotalBytes BigInt
+  netRxBps      Float
+  netTxBps      Float
+  load1         Float
+  load5         Float
+  load15        Float
+  uptimeSec     Float
+
+  @@index([serverId, ts])
+}

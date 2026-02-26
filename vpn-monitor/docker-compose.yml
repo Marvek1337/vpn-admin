@@ -1,0 +1,31 @@
+version: '3.9'
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: vpnmon
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  backend:
+    build: ./apps/backend
+    env_file: .env
+    depends_on:
+      - db
+    ports:
+      - "3000:3000"
+
+  frontend:
+    build: ./apps/frontend
+    env_file: .env
+    depends_on:
+      - backend
+    ports:
+      - "8080:8080"
+
+volumes:
+  pgdata:
