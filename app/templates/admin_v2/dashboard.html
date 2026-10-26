@@ -1,0 +1,178 @@
+{% extends "admin_v2/base.html" %}
+{% block title %}Обзор{% endblock %}
+{% block content %}
+
+<section class="dashboard-board">
+  <article class="dashboard-card hero-card">
+    <div class="hero-copy">
+      <span class="eyebrow">Операционный центр</span>
+      <h2>Платформа продаж и выдачи доступов</h2>
+      <p>Контролируйте заказы, свободные IP, активность серверов, платежные статусы и выдачу конфигов с одного экрана.</p>
+    </div>
+    <div class="hero-visual" aria-hidden="true">
+      <span></span><span></span><span></span><span></span><span></span>
+    </div>
+  </article>
+
+  <article class="metric-card accent-red">
+    <span class="metric-label">Выручка</span>
+    <strong>{{ stats.cards.revenue }} ₽</strong>
+    <small>Оплаченные заказы</small>
+    <i class="spark"></i>
+  </article>
+  <article class="metric-card accent-green">
+    <span class="metric-label">Заказы</span>
+    <strong>{{ stats.cards.orders }}</strong>
+    <small>{{ stats.cards.paid_orders }} оплачено</small>
+    <i class="spark"></i>
+  </article>
+  <article class="metric-card accent-blue">
+    <span class="metric-label">Конфиги</span>
+    <strong>{{ stats.cards.active_configs }}</strong>
+    <small>{{ stats.cards.configs }} всего</small>
+    <i class="spark"></i>
+  </article>
+  <article class="metric-card accent-cyan">
+    <span class="metric-label">Свободные IP</span>
+    <strong>{{ stats.cards.free_ips }}</strong>
+    <small>{{ stats.cards.online_servers }}/{{ stats.cards.active_servers }} серверов доступны</small>
+    <i class="spark"></i>
+  </article>
+
+  <article class="panel chart-panel span-8">
+    <div class="panel-head">
+      <div>
+        <span class="eyebrow">Аналитика продаж</span>
+        <h2>Продажи за 14 дней</h2>
+      </div>
+      <a class="panel-link" href="/admin/orders">Заказы</a>
+    </div>
+    <div class="combo-chart">
+      {% for point in stats.timeline %}
+      <div class="combo-point">
+        <span class="bar revenue" style="height: {{ point.revenue_pct }}%"></span>
+        <span class="bar orders" style="height: {{ point.orders_pct }}%"></span>
+        <small>{{ point.day }}</small>
+      </div>
+      {% endfor %}
+    </div>
+  </article>
+
+  <article class="panel ring-panel span-4">
+    <div class="panel-head">
+      <div>
+        <span class="eyebrow">Емкость</span>
+        <h2>Серверная емкость</h2>
+      </div>
+      <a class="panel-link" href="/admin/monitoring">Проверить</a>
+    </div>
+    <div class="capacity-ring">
+      <strong>{{ stats.cards.online_servers }}/{{ stats.cards.active_servers }}</strong>
+      <span>доступны</span>
+    </div>
+    <div class="mini-stats">
+      <span><b>{{ stats.cards.free_ips }}</b> свободно IP</span>
+      <span><b>{{ stats.cards.expiring_configs }}</b> скоро истекает</span>
+    </div>
+  </article>
+
+  <article class="panel span-4">
+    <div class="panel-head">
+      <div>
+        <span class="eyebrow">Платежи</span>
+        <h2>Статусы заказов</h2>
+      </div>
+    </div>
+    <div class="status-stack">
+      {% for item in stats.statuses %}
+      <div class="status-row">
+        <span>{{ item.label }}</span>
+        <strong>{{ item.count }}</strong>
+        <i style="width: {{ item.pct }}%"></i>
+      </div>
+      {% else %}
+      <div class="empty-state">Заказов пока нет</div>
+      {% endfor %}
+    </div>
+  </article>
+
+  <article class="panel span-4">
+    <div class="panel-head">
+      <div>
+        <span class="eyebrow">Серверы</span>
+        <h2>Свободные места</h2>
+      </div>
+      <a class="panel-link" href="/admin/servers">Серверы</a>
+    </div>
+    <div class="server-mini-list">
+      {% for s in servers[:5] %}
+      {% set server_stat = stats.latest_server_stats.get(s.code) %}
+      <div class="server-mini">
+        <span class="dot {% if server_stat and server_stat.online %}ok{% endif %}"></span>
+        <b>{{ s.name }}</b>
+        <em>{{ s.code }} · свободно: {% if server_stat and server_stat.free_ips is not none %}{{ server_stat.free_ips }}{% else %}—{% endif %}</em>
+      </div>
+      {% else %}
+      <div class="empty-state">Серверы не добавлены</div>
+      {% endfor %}
+    </div>
+  </article>
+
+  <article class="panel span-4">
+    <div class="panel-head">
+      <div>
+        <span class="eyebrow">Последние конфиги</span>
+        <h2>Выдача доступов</h2>
+      </div>
+      <a class="panel-link" href="/admin/configs">Все</a>
+    </div>
+    <div class="activity-list">
+      {% for c in configs[:5] %}
+      <div class="activity-row">
+        <span class="activity-mark {% if c.is_active %}ok{% endif %}"></span>
+        <div>
+          <strong>{{ c.config_name }}</strong>
+          <small>{{ c.server_id }} · {{ c.unique_code }}</small>
+        </div>
+        <em>{% if c.expires_at %}{{ c.expires_at.strftime('%d.%m') }}{% else %}∞{% endif %}</em>
+      </div>
+      {% else %}
+      <div class="empty-state">Конфигов пока нет</div>
+      {% endfor %}
+    </div>
+  </article>
+
+  <article class="panel table-card span-12">
+    <div class="panel-head">
+      <div>
+        <span class="eyebrow">Последние заказы</span>
+        <h2>Последние заказы</h2>
+      </div>
+      <a class="panel-link" href="/admin/orders">Открыть список</a>
+    </div>
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr><th>ID</th><th>Пользователь</th><th>Сервер</th><th>Действие</th><th>Сумма</th><th>Статус</th><th>Дата</th></tr>
+        </thead>
+        <tbody>
+          {% for o in orders[:8] %}
+          <tr>
+            <td>#{{ o.id }}</td>
+            <td>{{ o.user_id or '—' }}</td>
+            <td>{{ o.server_id }}</td>
+            <td>{{ o.action }}</td>
+            <td>{% if o.amount %}{{ o.amount|int }} ₽{% else %}—{% endif %}</td>
+            <td><span class="pill {{ o.status }}">{{ o.status }}</span></td>
+            <td>{% if o.created_at %}{{ o.created_at.strftime('%d.%m %H:%M') }}{% else %}—{% endif %}</td>
+          </tr>
+          {% else %}
+          <tr><td colspan="7">Заказов пока нет</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </article>
+</section>
+
+{% endblock %}

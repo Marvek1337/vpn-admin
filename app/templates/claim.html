@@ -1,0 +1,80 @@
+{% set brand = runtime.app.brand if runtime is defined and runtime.app is defined else 'vpn-admin' %}
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+  <title>{{ brand }} · выдача доступа</title>
+  <meta name="description" content="Страница выдачи WireGuard-конфига после покупки.">
+  <link rel="stylesheet" href="/static/css/client_v2.css?v=care-9">
+</head>
+<body class="client-ui claim-standalone">
+  <main class="claim-shell">
+    <section class="claim-card claim-card-wide">
+      <span class="badge success">Доступ готов</span>
+      <h1>{{ config.unique_code }}</h1>
+      <p class="claim-server-line">
+        Сервер:
+        {% if runtime is defined and runtime.server_names is defined %}
+          {{ runtime.server_names.get(config.server_id, config.server_id) }}
+        {% else %}
+          {{ config.server_id }}
+        {% endif %}
+      </p>
+      <div class="claim-method-grid">
+        <article class="claim-method">
+          <div class="claim-method-head">
+            <span class="claim-method-icon">WG</span>
+            <div>
+              <h2>WireGuard</h2>
+              <p>Оригинальный конфиг для официального клиента WireGuard.</p>
+            </div>
+          </div>
+          <div class="claim-qr-wrap">
+            <img src="{{ qr }}" class="qr-inline claim-qr" alt="QR-код WireGuard">
+          </div>
+          <a class="btn primary" href="/claim/download?unique_code={{ unique_code }}">Скачать WireGuard</a>
+        </article>
+
+        <article class="claim-method">
+          <div class="claim-method-head">
+            <span class="claim-method-icon accent">AWG</span>
+            <div>
+              <h2>Amnezia WG</h2>
+              {% if amnezia.available %}
+                <p>Конфиг с endpoint {{ amnezia.endpoint }} для AmneziaWG.</p>
+              {% else %}
+                <p>Для этого сервера endpoint Amnezia WG пока не настроен.</p>
+              {% endif %}
+            </div>
+          </div>
+          {% if amnezia.available and amnezia_qr %}
+            <div class="claim-qr-wrap">
+              <img src="{{ amnezia_qr }}" class="qr-inline claim-qr" alt="QR-код Amnezia WG">
+            </div>
+            <a class="btn primary" href="/claim/download/amnezia?unique_code={{ unique_code }}">Скачать Amnezia WG</a>
+          {% else %}
+            <div class="claim-unavailable">
+              Endpoint не найден для кода {{ config.server_id }}. Добавьте соответствие сервера в настройках продукта.
+            </div>
+            <button class="btn primary" type="button" disabled>Amnezia WG недоступен</button>
+          {% endif %}
+        </article>
+      </div>
+      <div class="claim-actions claim-account-actions">
+        {% if current_user %}
+          {% if not config.user_id %}
+            <a class="btn quiet" href="/claim/attach">Сохранить в кабинет</a>
+          {% endif %}
+          <a class="btn quiet" href="/cabinet">Открыть кабинет</a>
+        {% else %}
+          <a class="btn quiet" href="/login?next=/claim/attach">Войти</a>
+          <a class="btn quiet" href="/register?next=/claim/attach">Создать аккаунт</a>
+        {% endif %}
+      </div>
+      <small>Скачайте нужный файл или отсканируйте QR-код в выбранном приложении.</small>
+    </section>
+  </main>
+</body>
+</html>

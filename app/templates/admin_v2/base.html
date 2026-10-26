@@ -1,0 +1,76 @@
+{% set brand = runtime.app.brand if runtime is defined and runtime.app is defined else 'vpn-admin' %}
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+  <title>Admin · {{ brand }}</title>
+  <link rel="stylesheet" href="/static/css/admin_v2.css?v=care-9">
+</head>
+<body class="admin-ui">
+{% include '_icons.html' %}
+<div class="page-loader" aria-hidden="true">
+  <div class="loader-card">
+    <span class="loader-logo">{{ brand[:1]|upper }}</span>
+    <span class="loader-line"></span>
+    <small>Загрузка панели</small>
+  </div>
+</div>
+<div class="admin-app">
+  <aside class="app-sidebar" id="adminSidebar">
+    <a class="brand-block" href="/admin" aria-label="{{ brand }}">
+      <span class="brand-mark">{{ brand[:1]|upper }}</span>
+        <span class="brand-copy">
+        <strong>{{ brand }}</strong>
+        <small>Панель управления</small>
+      </span>
+    </a>
+    <nav class="side-nav" aria-label="Админ-навигация">
+      <a href="/admin" class="{% if request.url.path == '/admin' %}active{% endif %}"><span><svg><use href="#i-dashboard"></use></svg></span><b>Обзор</b></a>
+      <a href="/admin/users" class="{% if request.url.path.startswith('/admin/users') %}active{% endif %}"><span><svg><use href="#i-users"></use></svg></span><b>Пользователи</b></a>
+      <a href="/admin/orders" class="{% if request.url.path.startswith('/admin/orders') %}active{% endif %}"><span><svg><use href="#i-orders"></use></svg></span><b>Заказы</b></a>
+      <a href="/admin/configs" class="{% if request.url.path.startswith('/admin/configs') %}active{% endif %}"><span><svg><use href="#i-configs"></use></svg></span><b>Конфиги</b></a>
+      <a href="/admin/servers" class="{% if request.url.path.startswith('/admin/servers') %}active{% endif %}"><span><svg><use href="#i-server"></use></svg></span><b>Серверы</b></a>
+      <a href="/admin/monitoring" class="{% if request.url.path.startswith('/admin/monitoring') %}active{% endif %}"><span><svg><use href="#i-monitor"></use></svg></span><b>Мониторинг</b></a>
+      <a href="/admin/settings" class="{% if request.url.path.startswith('/admin/settings') %}active{% endif %}"><span><svg><use href="#i-settings"></use></svg></span><b>Настройки</b></a>
+      <a href="/admin/security" class="{% if request.url.path.startswith('/admin/security') %}active{% endif %}"><span><svg><use href="#i-shield"></use></svg></span><b>Безопасность</b></a>
+    </nav>
+    <div class="sidebar-widget">
+      <span class="widget-label">Инфраструктура</span>
+      <strong>WG-Easy</strong>
+      <small>Серверы, тарифы, товары и платежи настраиваются в отдельных разделах.</small>
+    </div>
+    <div class="sidebar-profile">
+      <span>{{ admin.username[:1]|upper }}</span>
+      <div><strong>{{ admin.username }}</strong><small>Администратор</small></div>
+    </div>
+  </aside>
+  <section class="app-workspace">
+    <header class="app-topbar">
+      <button class="sidebar-toggle" type="button" aria-label="Меню" onclick="toggleSidebar()"><svg><use href="#i-menu"></use></svg></button>
+      <div class="top-title">
+        <span>Панель управления</span>
+        <h1>{% block title %}Обзор{% endblock %}</h1>
+      </div>
+      <div class="top-actions">
+        <a class="top-pill" href="/cabinet">Кабинет</a>
+        <button class="top-icon" type="button" onclick="location.reload()" aria-label="Обновить"><svg><use href="#i-refresh"></use></svg></button>
+        <a class="top-icon" href="/auth/logout" aria-label="Выход"><svg><use href="#i-logout"></use></svg></a>
+        <div class="admin-user"><span>{{ admin.username[:1]|upper }}</span><strong>{{ admin.username }}</strong></div>
+      </div>
+    </header>
+    <main class="app-content">
+      {% if message %}<div class="toast">{{ message }}</div>{% endif %}
+      {% block content %}{% endblock %}
+    </main>
+  </section>
+</div>
+<script>
+function toggleSidebar(){document.body.classList.toggle('sidebar-open')}
+document.querySelectorAll('.panel,.metric-card,.table-card,.server-card,.dashboard-card').forEach((el,i)=>{el.style.animationDelay=(Math.min(i,18)*35)+'ms'});
+window.addEventListener('load', () => document.body.classList.add('page-ready'));
+document.addEventListener('keydown', e => { if (e.key === 'Escape') document.body.classList.remove('sidebar-open') });
+</script>
+</body>
+</html>

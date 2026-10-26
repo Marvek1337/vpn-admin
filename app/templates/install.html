@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+  <title>Установка продукта</title>
+  <link rel="stylesheet" href="/static/css/client_v2.css?v=care-9">
+</head>
+<body class="client-ui install-body">
+{% include '_icons.html' %}
+<div class="page-loader" aria-hidden="true"><div class="loader-card"><span class="loader-logo">V</span><span class="loader-line"></span></div></div>
+<main class="install-shell">
+  <section class="access-card install-intro">
+    <span class="eyebrow">Первый запуск</span>
+    <h1>Настройте продукт перед стартом продаж</h1>
+    <p>Эти данные сохранятся в базе. После установки вы сможете менять бренд, интеграции, тарифы, товары и серверы в админке.</p>
+  </section>
+
+  <form method="post" action="/install" class="install-form">
+    {% if error %}<div class="alert danger">{{ error }}</div>{% endif %}
+
+    <section class="setup-card">
+      <h2>Компания и администратор</h2>
+      <div class="setup-grid">
+        <label><span>Название продукта</span><input name="brand" value="vpn-admin" required></label>
+        <label><span>Публичный URL</span><input name="public_base_url" placeholder="https://vpn.example.com"></label>
+        <label><span>Ссылка поддержки</span><input name="support_url" placeholder="https://t.me/support"></label>
+        <label><span>Дней на оплату после окончания</span><input name="expired_config_grace_days" type="number" min="0" value="1"></label>
+        <label><span>Логин администратора</span><input name="admin_username" value="admin" required minlength="3"></label>
+        <label><span>Пароль администратора</span><input name="admin_password" type="password" required minlength="8"></label>
+        <label><span>Повтор пароля</span><input name="admin_password_repeat" type="password" required minlength="8"></label>
+      </div>
+    </section>
+
+    <section class="setup-card">
+      <h2>Интеграции</h2>
+      <div class="setup-grid">
+        <label><span>GGSEL API URL</span><input name="ggsel_base_url" value="https://seller.ggsel.com/api_sellers/api"></label>
+        <label><span>GGSEL seller_id</span><input name="ggsel_seller_id"></label>
+        <label><span>GGSEL API key</span><input name="ggsel_api_key"></label>
+        <label><span>GGSEL endpoint активности</span><input name="ggsel_product_update_endpoint"></label>
+        <label class="check-line"><input type="checkbox" name="platega_enabled" value="1" checked> Platega включена</label>
+        <label><span>Platega URL</span><input name="platega_base_url" value="https://app.platega.io"></label>
+        <label><span>Merchant ID</span><input name="platega_merchant_id"></label>
+        <label><span>Secret</span><input name="platega_secret"></label>
+        <label><span>Метод по умолчанию</span>
+          <select name="platega_payment_method">
+            <option value="2" selected>СБП / QR</option>
+            <option value="11">Банковская карта</option>
+            <option value="13">Криптовалюта</option>
+          </select>
+        </label>
+        <label><span>Валюта</span><input name="platega_currency" value="RUB"></label>
+      </div>
+    </section>
+
+    <section class="setup-card">
+      <h2>Telegram</h2>
+      <p class="muted">Токен бота нужен для отправки кодов восстановления пароля. Имя бота используется в подсказках для привязки аккаунта.</p>
+      <div class="setup-grid">
+        <label><span>Токен бота</span><input name="telegram_bot_token" placeholder="123456:ABC..."></label>
+        <label><span>Имя бота</span><input name="telegram_bot_username" placeholder="your_support_bot"></label>
+      </div>
+    </section>
+
+    <section class="setup-card">
+      <h2>Тарифы</h2>
+      <div class="setup-table">
+        {% for p in default_periods %}
+        <div class="setup-row period-row">
+          <input name="period_code" value="{{ p.code }}" placeholder="Код">
+          <input name="period_label" value="{{ p.label }}" placeholder="Название">
+          <input name="period_days" value="{{ p.days }}" placeholder="Дней">
+          <input name="period_price" value="{{ p.price }}" placeholder="Цена">
+        </div>
+        {% endfor %}
+      </div>
+    </section>
+
+    <section class="setup-card">
+      <h2>WG-Easy серверы</h2>
+      <div class="setup-table">
+        {% for s in default_servers %}
+        <div class="setup-row server-row">
+          <input name="server_code" value="{{ s.code }}" placeholder="Код">
+          <input name="server_name" value="{{ s.name }}" placeholder="Название">
+          <input name="server_api_url" value="{{ s.api_url }}" placeholder="WG-Easy URL">
+          <input name="server_host" value="{{ s.server_host or '' }}" placeholder="URL для пинга пользователя">
+          <input name="server_username" value="{{ s.username }}" placeholder="Логин">
+          <input name="server_password" value="{{ s.password }}" placeholder="Пароль">
+          <input name="server_subnet" value="{{ s.subnet }}" placeholder="10.8.0.0/24">
+          <input name="server_country" value="{{ s.country }}" placeholder="Страна">
+          <input name="server_min_free_ips" value="3" placeholder="Мин. IP">
+          <input name="server_priority" value="100" placeholder="Приоритет">
+        </div>
+        {% endfor %}
+      </div>
+    </section>
+
+    <section class="setup-card">
+      <h2>GGSEL товары</h2>
+      <div class="setup-table">
+        {% for p in default_products %}
+        <div class="setup-row product-row">
+          <input name="product_item_id" value="{{ p.item_id }}" placeholder="item_id">
+          <input name="product_name" value="{{ p.name }}" placeholder="Название">
+          <input name="product_server_ids" value="{{ p.server_ids }}" placeholder="server-1, server-2">
+        </div>
+        {% endfor %}
+      </div>
+    </section>
+
+    <section class="setup-card">
+      <h2>Юридические тексты</h2>
+      <p class="muted">Эти тексты будут опубликованы на страницах политики конфиденциальности и пользовательского соглашения. Их можно изменить после установки в админке.</p>
+      <div class="setup-grid legal-setup-grid">
+        <label><span>Политика конфиденциальности</span><textarea name="privacy_text">{{ privacy_text }}</textarea></label>
+        <label><span>Пользовательское соглашение</span><textarea name="terms_text">{{ terms_text }}</textarea></label>
+      </div>
+    </section>
+
+    <button class="btn primary full install-submit" type="submit">Завершить установку</button>
+  </form>
+</main>
+<script>
+  window.addEventListener('load', () => document.body.classList.add('page-ready'));
+</script>
+</body>
+</html>

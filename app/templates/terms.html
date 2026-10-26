@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="legal-page">
+  <div class="access-card legal-card">
+    <span class="eyebrow">Документы</span>
+    <h1>Пользовательское соглашение</h1>
+    <p class="muted">Актуальная редакция для сервиса {{ brand }}.</p>
+    <div class="legal-content">
+      {% set text = runtime.app.terms_text if runtime is defined and runtime.app is defined else '' %}
+      {% if text %}
+        {% for paragraph in text.split('\n') %}
+          {% if paragraph.strip() %}<p>{{ paragraph }}</p>{% endif %}
+        {% endfor %}
+      {% else %}
+        <p>Текст пользовательского соглашения настраивается администратором сервиса.</p>
+      {% endif %}
+      <h3>Контакты</h3>
+      <p>{% if support_url %}<a href="{{ support_url }}">{{ support_url }}</a>{% else %}Контакты поддержки указываются владельцем сервиса.{% endif %}</p>
+    </div>
+  </div>
+</section>
+{% endblock %}

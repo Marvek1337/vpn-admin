@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+{% block content %}
+<section class="auth-layout">
+  <div class="access-card auth-copy">
+    <span class="eyebrow">Регистрация</span>
+    <h1>Создайте аккаунт для управления доступами</h1>
+    <p>После регистрации можно оплачивать заказы, продлевать конфиги и хранить заметки к устройствам.</p>
+  </div>
+  <div class="access-card auth-panel">
+    {% if error %}<div class="alert danger">{{ error }}</div>{% endif %}
+    <form method="post" action="/auth/register" class="form-stack">
+      <input type="hidden" name="next_url" value="{{ next }}">
+      <label><span>Логин</span><input name="username" required minlength="3" autocomplete="username"></label>
+      <label><span>Пароль</span><input name="password" type="password" required minlength="6" autocomplete="new-password"></label>
+      <label><span>Telegram ID</span><input name="telegram_id" placeholder="Необязательно"></label>
+      <button class="btn primary full" type="submit">Создать аккаунт</button>
+    </form>
+  </div>
+</section>
+{% endblock %}

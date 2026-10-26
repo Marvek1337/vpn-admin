@@ -1,0 +1,69 @@
+{% extends 'base.html' %}
+{% block content %}
+<section class="client-board">
+  <article class="access-card home-hero span-8">
+    <div>
+      <span class="eyebrow">Автоматическая выдача</span>
+      <h1>{{ runtime.app.brand }} выдает VPN-доступ сразу после оплаты</h1>
+      <p>Выберите локацию и срок, оплатите заказ и получите WireGuard-конфиг с QR-кодом в личном кабинете. Продление и скачивание доступны без обращения в поддержку.</p>
+      <div class="hero-actions">
+      {% if request.session.get('user_id') %}
+        <a class="btn primary" href="/cabinet">Открыть кабинет</a>
+      {% else %}
+        <a class="btn primary" href="/register">Создать аккаунт</a>
+        <a class="btn quiet" href="/login">Войти</a>
+      {% endif %}
+      </div>
+    </div>
+    <div class="home-graph" aria-hidden="true"><span></span><span></span><span></span><span></span></div>
+  </article>
+
+  <aside class="access-card span-4 metric-stack">
+    <div class="metric-card compact accent-cyan"><span class="metric-label">Локации</span><strong>{{ runtime.server_names|length }}</strong><small>доступны в продаже</small></div>
+    <div class="metric-card compact accent-green"><span class="metric-label">Тарифы</span><strong>{{ runtime.period_labels|length }}</strong><small>периодов доступа</small></div>
+    <div class="metric-card compact accent-red"><span class="metric-label">Выдача</span><strong>Сразу</strong><small>без ручной отправки</small></div>
+  </aside>
+
+  <section class="access-card span-7">
+    <div class="panel-head">
+      <div><span class="eyebrow">Покупка</span><h2>Доступные серверы</h2></div>
+    </div>
+    <div class="location-list">
+      {% for group in runtime.sellable_server_groups %}
+      <div class="location-row">
+        <span class="status-dot"></span>
+        <div>
+          <strong>{{ group.name }}</strong>
+          <small>
+            {% if group.options|length > 1 %}
+              {{ group.options|length }} сервера · рекомендуем {{ group.recommended_code }}
+            {% else %}
+              {{ group.options[0].code }}
+            {% endif %}
+          </small>
+        </div>
+        <span class="badge success">готов</span>
+      </div>
+      {% else %}
+      <div class="empty-state">Свободные серверы пока не настроены.</div>
+      {% endfor %}
+    </div>
+  </section>
+
+  <section class="access-card span-5">
+    <div class="panel-head">
+      <div><span class="eyebrow">Тарифы</span><h2>Периоды доступа</h2></div>
+    </div>
+    <div class="price-list">
+      {% for key, label in runtime.period_labels.items() %}
+      <div class="price-row">
+        <span>{{ label }}</span>
+        <strong>{{ runtime.period_prices[key]|int }} ₽</strong>
+      </div>
+      {% else %}
+      <div class="empty-state">Тарифы появятся после настройки.</div>
+      {% endfor %}
+    </div>
+  </section>
+</section>
+{% endblock %}

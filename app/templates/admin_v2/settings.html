@@ -1,0 +1,171 @@
+{% extends 'admin_v2/base.html' %}
+{% block title %}Настройки{% endblock %}
+{% block content %}
+<section class="settings-grid">
+<section class="panel settings-card">
+  <h2>Основные</h2>
+  <p class="small">Базовые данные продукта. Они используются в клиентском интерфейсе, документах и платежных ссылках.</p>
+  <form class="server-form" method="post" action="/admin/settings/app">
+    <input name="brand" value="{{ app_settings.get('brand', '') }}" placeholder="Бренд" required>
+    <input name="support_url" value="{{ app_settings.get('support_url', '') }}" placeholder="Ссылка поддержки">
+    <input name="public_base_url" value="{{ app_settings.get('public_base_url', '') }}" placeholder="Публичный URL сайта">
+    <button>Сохранить</button>
+  </form>
+</section>
+
+<section class="panel settings-card settings-wide">
+  <h2>Интеграции</h2>
+  <p class="small">GGSEL отвечает за проверку внешних покупок и управление активностью товаров. Platega используется для создания платежных ссылок в кабинете.</p>
+  <form class="server-form" method="post" action="/admin/settings/integrations">
+    <input name="ggsel_base_url" value="{{ app_settings.get('ggsel_base_url', 'https://seller.ggsel.com/api_sellers/api') }}" placeholder="GGSEL API URL">
+    <input name="ggsel_seller_id" value="{{ app_settings.get('ggsel_seller_id', '') }}" placeholder="GGSEL seller_id">
+    <input name="ggsel_api_key" value="{{ app_settings.get('ggsel_api_key', '') }}" placeholder="GGSEL API key">
+    <input name="ggsel_product_update_endpoint" value="{{ app_settings.get('ggsel_product_update_endpoint', '') }}" placeholder="GGSEL endpoint смены активности">
+    <label class="check"><input type="checkbox" name="platega_enabled" value="1" {% if app_settings.get('platega_enabled') == 'true' %}checked{% endif %}> Platega включена</label>
+    <input name="platega_base_url" value="{{ app_settings.get('platega_base_url', 'https://app.platega.io') }}" placeholder="Platega URL">
+    <input name="platega_merchant_id" value="{{ app_settings.get('platega_merchant_id', '') }}" placeholder="Merchant ID">
+    <input name="platega_secret" value="{{ app_settings.get('platega_secret', '') }}" placeholder="Secret">
+    <select name="platega_payment_method">
+      <option value="2" {% if app_settings.get('platega_payment_method', '2') == '2' %}selected{% endif %}>СБП / QR</option>
+      <option value="11" {% if app_settings.get('platega_payment_method') == '11' %}selected{% endif %}>Банковская карта</option>
+      <option value="13" {% if app_settings.get('platega_payment_method') == '13' %}selected{% endif %}>Криптовалюта</option>
+    </select>
+    <input name="platega_currency" value="{{ app_settings.get('platega_currency', 'RUB') }}" placeholder="Валюта">
+    <input name="platega_callback_secret" value="{{ app_settings.get('platega_callback_secret', '') }}" placeholder="Callback secret">
+    <button>Сохранить</button>
+  </form>
+</section>
+
+<section class="panel settings-card">
+  <h2>Telegram</h2>
+  <p class="small">Токен бота нужен для отправки кодов восстановления пароля. Имя бота используется в подсказках для привязки аккаунта.</p>
+  <form class="server-form" method="post" action="/admin/settings/telegram">
+    <input name="telegram_bot_token" value="{{ app_settings.get('telegram_bot_token', '') }}" placeholder="Токен бота">
+    <input name="telegram_bot_username" value="{{ app_settings.get('telegram_bot_username', '') }}" placeholder="Имя бота без @">
+    <button>Сохранить</button>
+  </form>
+</section>
+
+<section class="panel settings-card">
+  <h2>Операции</h2>
+  <p class="small">Сервис показывает конфиги после окончания срока в течение grace-периода. Очистка удаляет клиента на WG-Easy только после этого буфера.</p>
+  <form class="server-form" method="post" action="/admin/settings/operations">
+    <input name="expired_config_grace_days" type="number" min="0" value="{{ app_settings.get('expired_config_grace_days', '1') }}" placeholder="Дней на оплату после окончания">
+    <button>Сохранить</button>
+  </form>
+</section>
+
+<section class="panel settings-card">
+  <h2>Импорт старой базы</h2>
+  <p class="small">Укажите путь к старому SQLite-файлу внутри сервера или Docker-контейнера. Импорт переносит пользователей и все записи из таблицы vpn_configs, дубли ищутся по unique_code + server_id.</p>
+  <form class="server-form" method="post" action="/admin/settings/import-legacy-db">
+    <input name="source_path" placeholder="/app/data/old_app.db" required>
+    <label class="check"><input type="checkbox" name="import_users" value="1" checked> Импортировать пользователей</label>
+    <label class="check"><input type="checkbox" name="overwrite_configs" value="1"> Обновлять существующие конфиги</label>
+    <button>Запустить импорт</button>
+  </form>
+</section>
+
+<section class="panel settings-card settings-wide">
+  <h2>Юридические страницы</h2>
+  <p class="small">Тексты публикуются на страницах “Политика конфиденциальности” и “Пользовательское соглашение”. Пишите готовый текст без HTML: каждый абзац с новой строки.</p>
+  <form class="server-form legal-form" method="post" action="/admin/settings/legal">
+    <label><span>Политика конфиденциальности</span><textarea name="privacy_text">{{ app_settings.get('privacy_text', '') }}</textarea></label>
+    <label><span>Пользовательское соглашение</span><textarea name="terms_text">{{ app_settings.get('terms_text', '') }}</textarea></label>
+    <button>Сохранить</button>
+  </form>
+</section>
+
+<section class="panel settings-card">
+  <h2>Добавить период</h2>
+  <p class="small">Периоды используются для новых заказов и продлений. Пустое поле “дней” означает бессрочный тариф.</p>
+  <form class="server-form" method="post" action="/admin/settings/periods/create">
+    <input name="code" placeholder="30" required>
+    <input name="label" placeholder="30 дней" required>
+    <input name="days" type="number" placeholder="Дней, пусто = бессрочно">
+    <input name="price" type="number" step="0.01" value="0">
+    <input name="sort_order" type="number" value="100">
+    <label class="check"><input type="checkbox" name="is_active" value="1" checked> Активен</label>
+    <button>Добавить</button>
+  </form>
+</section>
+
+<section class="config-list">
+  {% for p in periods %}
+  <article class="server-card">
+    <form method="post" action="/admin/settings/periods/{{ p.id }}/update">
+      <div class="server-head">
+        <div><h3>{{ p.label }}</h3><p class="mono">{{ p.code }}</p></div>
+        <span class="pill {% if p.is_active %}paid{% else %}canceled{% endif %}">{% if p.is_active %}активен{% else %}выключен{% endif %}</span>
+      </div>
+      <div class="server-form edit">
+        <input name="code" value="{{ p.code }}" required>
+        <input name="label" value="{{ p.label }}" required>
+        <input name="days" type="number" value="{% if p.days is not none %}{{ p.days }}{% endif %}" placeholder="Пусто = бессрочно">
+        <input name="price" type="number" step="0.01" value="{{ p.price }}">
+        <input name="sort_order" type="number" value="{{ p.sort_order }}">
+        <label class="check"><input type="checkbox" name="is_active" value="1" {% if p.is_active %}checked{% endif %}> Активен</label>
+        <button>Сохранить</button>
+      </div>
+    </form>
+    <div class="actions">
+      <form method="post" action="/admin/settings/periods/{{ p.id }}/delete" onsubmit="return confirm('Удалить период?');"><button>Удалить</button></form>
+    </div>
+  </article>
+  {% else %}
+  <article class="server-card">Периоды не добавлены</article>
+  {% endfor %}
+</section>
+
+<section class="panel settings-card">
+  <h2>Добавить товар</h2>
+  <p class="small">Товар связывает GGSEL item_id со списком серверов. При активации покупки система выберет доступный сервер из этого списка.</p>
+  <form class="server-form" method="post" action="/admin/settings/products/create">
+    <input name="item_id" type="number" placeholder="GGSEL item_id" required>
+    <input name="name" placeholder="Название" required>
+    <input name="server_ids" placeholder="server-1, server-2">
+    <label class="check"><input type="checkbox" name="is_active" value="1" checked> Активен</label>
+    <button>Добавить</button>
+  </form>
+</section>
+
+<section class="config-list">
+  {% for product in products %}
+  <article class="server-card">
+    <form method="post" action="/admin/settings/products/{{ product.id }}/update">
+      <div class="server-head">
+        <div><h3>{{ product.name }}</h3><p class="mono">{{ product.item_id }}</p></div>
+        <span class="pill {% if product.is_active %}paid{% else %}canceled{% endif %}">{% if product.is_active %}активен{% else %}выключен{% endif %}</span>
+      </div>
+      <div class="meta-grid">
+        <span>Серверы: {{ product_server_ids.get(product.id, '') or '—' }}</span>
+      </div>
+      <div class="server-form edit">
+        <input name="item_id" type="number" value="{{ product.item_id }}" required>
+        <input name="name" value="{{ product.name }}" required>
+        <input name="server_ids" value="{{ product_server_ids.get(product.id, '') }}" placeholder="server-1, server-2">
+        <label class="check"><input type="checkbox" name="is_active" value="1" {% if product.is_active %}checked{% endif %}> Активен</label>
+        <button>Сохранить</button>
+      </div>
+    </form>
+    <div class="actions">
+      <form method="post" action="/admin/settings/products/{{ product.id }}/delete" onsubmit="return confirm('Удалить товар?');"><button>Удалить</button></form>
+    </div>
+  </article>
+  {% else %}
+  <article class="server-card">Товары не добавлены</article>
+  {% endfor %}
+</section>
+
+<section class="panel settings-card settings-wide">
+  <h2>Коды серверов</h2>
+  <div class="meta-grid">
+    {% for server in servers %}
+    <span>{{ server.code }} · {{ server.name }}</span>
+    {% else %}
+    <span>Серверы не добавлены</span>
+    {% endfor %}
+  </div>
+</section>
+</section>
+{% endblock %}

@@ -1,0 +1,46 @@
+{% extends 'admin_v2/base.html' %}
+{% block title %}Конфиги{% endblock %}
+{% block content %}
+<section class="page-stack">
+  <form class="toolbar" method="get">
+    <label class="search-field"><span><svg><use href="#i-search"></use></svg></span><input name="q" value="{{ q }}" placeholder="Код, сервер или заметка"></label>
+    <select name="active">
+      <option value="">Все</option>
+      <option value="1" {% if active=='1' %}selected{% endif %}>Активные</option>
+      <option value="0" {% if active=='0' %}selected{% endif %}>Отключенные</option>
+    </select>
+    <button>Фильтр</button>
+    <a href="/admin/configs">Сброс</a>
+  </form>
+
+  <section class="config-list">
+    {% for c in rows %}
+    <article class="server-card config-admin-card">
+      <div class="server-head">
+        <div>
+          <span class="eyebrow">Конфиг #{{ c.id }}</span>
+          <h3>{{ c.config_name }}</h3>
+          <p class="mono">{{ c.unique_code }}</p>
+        </div>
+        <span class="pill {% if c.is_active %}paid{% else %}canceled{% endif %}">{% if c.is_active %}активен{% else %}выключен{% endif %}</span>
+      </div>
+      <div class="meta-grid">
+        <span>Пользователь: {{ c.user_id or '—' }}</span>
+        <span>Заказ: {{ c.order_id or '—' }}</span>
+        <span>Сервер: {{ c.server_id }}</span>
+        <span>Протокол: {{ c.protocol if c.protocol is defined else 'wireguard' }}</span>
+        <span>Истекает: {% if c.expires_at %}{{ c.expires_at.strftime('%d.%m.%Y %H:%M') }}{% else %}∞{% endif %}</span>
+        <span>Заметка: {{ c.user_note or '—' }}</span>
+      </div>
+      <div class="actions">
+        <a href="/configs/admin/{{ c.id }}/download">Скачать</a>
+        <form method="post" action="/admin/configs/{{ c.id }}/toggle"><button>{% if c.is_active %}Отключить{% else %}Включить{% endif %}</button></form>
+        <form method="post" action="/admin/configs/{{ c.id }}/extend" class="inline"><input name="days" type="number" value="30"><button>Продлить</button></form>
+      </div>
+    </article>
+    {% else %}
+    <article class="server-card empty-state">Конфиги не найдены</article>
+    {% endfor %}
+  </section>
+</section>
+{% endblock %}

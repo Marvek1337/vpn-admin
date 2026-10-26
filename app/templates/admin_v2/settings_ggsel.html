@@ -1,0 +1,24 @@
+{% extends 'admin_v2/base.html' %}
+{% block title %}GGSEL{% endblock %}
+{% block content %}
+<section class="settings-page-grid">
+  <article class="panel settings-card settings-main-card">
+    <div class="panel-head">
+      <div><span class="eyebrow">Marketplace</span><h2>Интеграция GGSEL</h2></div>
+    </div>
+    <p class="small">GGSEL используется для проверки внешних покупок и управления доступностью товаров.</p>
+    <form class="server-form" method="post" action="/admin/settings/ggsel">
+      <label><span>GGSEL API URL</span><input name="ggsel_base_url" value="{{ app_settings.get('ggsel_base_url', 'https://seller.ggsel.com/api_sellers/api') }}" placeholder="https://seller.ggsel.com/api_sellers/api"></label>
+      <label><span>Seller ID</span><input name="ggsel_seller_id" value="{{ app_settings.get('ggsel_seller_id', '') }}" placeholder="seller_id"></label>
+      <label><span>API key</span><input name="ggsel_api_key" value="{{ app_settings.get('ggsel_api_key', '') }}" placeholder="ключ продавца"></label>
+      <label><span>Endpoint смены активности</span><input name="ggsel_product_update_endpoint" value="{{ app_settings.get('ggsel_product_update_endpoint', '') }}" placeholder="/products/{id}/data"></label>
+      <button>Сохранить GGSEL</button>
+    </form>
+  </article>
+  <article class="panel settings-note">
+    <h2>Товары GGSEL</h2>
+    <p class="small">Связка `item_id -> серверы` настраивается отдельно, чтобы не смешивать API-ключи и маршрутизацию продаж.</p>
+    <a class="panel-link" href="/admin/settings/products">Открыть товары</a>
+  </article>
+</section>
+{% endblock %}

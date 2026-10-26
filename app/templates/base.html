@@ -1,0 +1,91 @@
+{% set brand = runtime.app.brand if runtime is defined and runtime.app is defined else 'vpn-admin' %}
+{% set support_url = runtime.app.support_url if runtime is defined and runtime.app is defined else '' %}
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+  <title>{{ brand }} · личный кабинет</title>
+  <meta name="description" content="Личный кабинет для покупки, выдачи и продления WireGuard-доступов.">
+  <link rel="stylesheet" href="/static/css/client_v2.css?v=care-9">
+</head>
+<body class="client-ui">
+  {% include '_icons.html' %}
+  <div class="page-loader" aria-hidden="true">
+    <div class="loader-card">
+      <span class="loader-logo">{{ brand[:1]|upper }}</span>
+      <span class="loader-line"></span>
+      <small>Подготавливаем кабинет</small>
+    </div>
+  </div>
+  <div class="client-app">
+    <aside class="client-sidebar" id="clientSidebar">
+      <a href="/" class="brand-block">
+        <span class="brand-mark">{{ brand[:1]|upper }}</span>
+        <span class="brand-copy">
+          <strong>{{ brand }}</strong>
+          <small>Личный доступ</small>
+        </span>
+      </a>
+      <nav class="side-nav">
+        <a href="/" class="{% if request.url.path == '/' %}active{% endif %}"><span><svg><use href="#i-home"></use></svg></span><b>Главная</b></a>
+        {% if request.session.get('user_id') %}
+          <a href="/cabinet" class="{% if request.url.path.startswith('/cabinet') %}active{% endif %}"><span><svg><use href="#i-dashboard"></use></svg></span><b>Кабинет</b></a>
+        {% else %}
+          <a href="/login" class="{% if request.url.path.startswith('/login') %}active{% endif %}"><span><svg><use href="#i-login"></use></svg></span><b>Войти</b></a>
+          <a href="/register" class="{% if request.url.path.startswith('/register') %}active{% endif %}"><span><svg><use href="#i-register"></use></svg></span><b>Регистрация</b></a>
+        {% endif %}
+        <a href="/privacy" class="{% if request.url.path.startswith('/privacy') %}active{% endif %}"><span><svg><use href="#i-privacy"></use></svg></span><b>Политика</b></a>
+        <a href="/terms" class="{% if request.url.path.startswith('/terms') %}active{% endif %}"><span><svg><use href="#i-terms"></use></svg></span><b>Условия</b></a>
+      </nav>
+      <div class="sidebar-widget">
+        <span class="widget-label">Статус доступа</span>
+        <strong>WireGuard</strong>
+        <small>Покупка, продление, QR-коды и заметки собраны в личном кабинете.</small>
+      </div>
+      <div class="sidebar-profile">
+        <span>{{ (request.session.get('user_id') and 'U') or brand[:1]|upper }}</span>
+        <div>
+          <strong>{% if request.session.get('user_id') %}Личный кабинет{% else %}Гость{% endif %}</strong>
+          <small>{% if request.session.get('user_id') %}Доступы и заказы{% else %}Вход не выполнен{% endif %}</small>
+        </div>
+      </div>
+    </aside>
+    <section class="client-workspace">
+      <header class="client-topbar">
+        <button class="sidebar-toggle" type="button" aria-label="Меню" onclick="toggleSidebar()"><svg><use href="#i-menu"></use></svg></button>
+        <div class="top-title">
+          <span>Личный кабинет</span>
+          <h2>{{ brand }}</h2>
+        </div>
+        <div class="top-actions">
+          {% if request.session.get('user_id') %}
+            <a class="top-pill" href="/auth/logout">Выйти</a>
+          {% else %}
+            <a class="top-pill" href="/login">Войти</a>
+          {% endif %}
+          {% if support_url %}<a class="top-icon" href="{{ support_url }}" aria-label="Поддержка"><svg><use href="#i-support"></use></svg></a>{% endif %}
+        </div>
+      </header>
+      <main class="client-content">
+        {% block content %}{% endblock %}
+      </main>
+      <footer class="client-footer">
+        <span>© {{ now.year if now else 2026 }} {{ brand }}</span>
+        <nav>
+          <a href="/privacy">Конфиденциальность</a>
+          <a href="/terms">Условия</a>
+          {% if support_url %}<a href="{{ support_url }}">Поддержка</a>{% endif %}
+        </nav>
+      </footer>
+    </section>
+  </div>
+  <script>
+    function toggleSidebar(){document.body.classList.toggle('sidebar-open')}
+    document.querySelectorAll('.panel,.metric-card,.access-card,.config-card,.table-card').forEach((el,i)=>{el.style.animationDelay=(Math.min(i,18)*38)+'ms'});
+    window.addEventListener('load', () => document.body.classList.add('page-ready'));
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') document.body.classList.remove('sidebar-open') });
+  </script>
+</body>
+</html>

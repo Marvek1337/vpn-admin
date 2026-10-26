@@ -1,0 +1,44 @@
+{% extends 'admin_v2/base.html' %}
+{% block title %}Пользователи{% endblock %}
+{% block content %}
+<section class="page-stack">
+  <form class="toolbar" method="get">
+    <label class="search-field"><span><svg><use href="#i-search"></use></svg></span><input name="q" value="{{ q }}" placeholder="Логин или Telegram ID"></label>
+    <button>Найти</button>
+    <a href="/admin/users">Сброс</a>
+  </form>
+
+  <section class="panel table-card">
+    <div class="panel-head">
+      <div><span class="eyebrow">Аккаунты</span><h2>Пользователи сервиса</h2></div>
+      <span class="panel-count">{{ rows|length }} записей</span>
+    </div>
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr><th>ID</th><th>Логин</th><th>Telegram</th><th>Роль</th><th>Создан</th><th>Пароль</th></tr>
+        </thead>
+        <tbody>
+          {% for u in rows %}
+          <tr>
+            <td>#{{ u.id }}</td>
+            <td><strong>{{ u.username }}</strong></td>
+            <td>{{ u.telegram_id or '—' }}</td>
+            <td>{% if u.is_admin %}<span class="pill warn">админ</span>{% else %}<span class="pill">клиент</span>{% endif %}</td>
+            <td>{{ u.created_at.strftime('%d.%m.%Y') }}</td>
+            <td>
+              <form class="inline" method="post" action="/admin/users/{{ u.id }}/password">
+                <input type="password" name="new_password" placeholder="новый пароль">
+                <button>Сменить</button>
+              </form>
+            </td>
+          </tr>
+          {% else %}
+          <tr><td colspan="6">Пользователи не найдены</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+</section>
+{% endblock %}

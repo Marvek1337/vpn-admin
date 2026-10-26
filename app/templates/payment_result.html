@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+{% block content %}
+<section class="claim-layout premium-claim">
+  <div class="access-card claim-main">
+    <div class="stack-sm claim-content">
+      <span class="badge {% if order.status == 'paid' %}success{% elif order.status == 'canceled' %}danger{% else %}warn{% endif %}">Статус платежа</span>
+      <h1>Заказ #{{ order.id }}</h1>
+      <p class="muted claim-server">Текущий статус: <b>{{ order.status }}</b>{% if order.provider_status %} · провайдер: {{ order.provider_status }}{% endif %}</p>
+      <div class="summary-grid" style="text-align:left;margin:22px 0">
+        <div class="metric-card compact accent-green"><span class="metric-label">Сумма</span><strong>{% if order.amount %}{{ order.amount|int }} ₽{% else %}—{% endif %}</strong></div>
+        <div class="metric-card compact accent-cyan"><span class="metric-label">Сервер</span><strong style="font-size:20px">{{ order.server_id or '—' }}</strong></div>
+      </div>
+      <div class="action-row wrap claim-actions">
+        <a href="/cabinet" class="btn primary">Вернуться в кабинет</a>
+        {% if order.status == 'new' %}<a href="/cabinet?open_payment_for={{ order.id }}" class="btn quiet">Повторить оплату</a>{% endif %}
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}

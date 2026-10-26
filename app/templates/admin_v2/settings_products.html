@@ -1,0 +1,54 @@
+{% extends 'admin_v2/base.html' %}
+{% block title %}Товары GGSEL{% endblock %}
+{% block content %}
+<section class="page-stack">
+  <section class="panel settings-card">
+    <div class="panel-head">
+      <div><span class="eyebrow">Маршрутизация продаж</span><h2>Добавить товар</h2></div>
+    </div>
+    <p class="small">Товар связывает GGSEL item_id со списком серверов. При активации покупки система выберет доступный сервер из этого списка.</p>
+    <form class="server-form" method="post" action="/admin/settings/products/create">
+      <label><span>GGSEL item_id</span><input name="item_id" type="number" placeholder="1001" required></label>
+      <label><span>Название</span><input name="name" placeholder="Финляндия 30 дней" required></label>
+      <label><span>Серверы</span><input name="server_ids" placeholder="finland-1, finland-2"></label>
+      <label class="check"><input type="checkbox" name="is_active" value="1" checked> Активен</label>
+      <button>Добавить товар</button>
+    </form>
+  </section>
+
+  <section class="config-list">
+    {% for product in products %}
+    <article class="server-card">
+      <form method="post" action="/admin/settings/products/{{ product.id }}/update">
+        <div class="server-head">
+          <div><h3>{{ product.name }}</h3><p class="mono">{{ product.item_id }}</p></div>
+          <span class="pill {% if product.is_active %}paid{% else %}canceled{% endif %}">{% if product.is_active %}активен{% else %}выключен{% endif %}</span>
+        </div>
+        <div class="meta-grid"><span>Серверы: {{ product_server_ids.get(product.id, '') or '—' }}</span></div>
+        <div class="server-form edit">
+          <label><span>GGSEL item_id</span><input name="item_id" type="number" value="{{ product.item_id }}" required></label>
+          <label><span>Название</span><input name="name" value="{{ product.name }}" required></label>
+          <label><span>Серверы</span><input name="server_ids" value="{{ product_server_ids.get(product.id, '') }}" placeholder="server-1, server-2"></label>
+          <label class="check"><input type="checkbox" name="is_active" value="1" {% if product.is_active %}checked{% endif %}> Активен</label>
+          <button>Сохранить</button>
+        </div>
+      </form>
+      <div class="actions"><form method="post" action="/admin/settings/products/{{ product.id }}/delete" onsubmit="return confirm('Удалить товар?');"><button>Удалить</button></form></div>
+    </article>
+    {% else %}
+    <article class="server-card empty-state">Товары не добавлены</article>
+    {% endfor %}
+  </section>
+
+  <section class="panel settings-card">
+    <h2>Коды серверов</h2>
+    <div class="meta-grid">
+      {% for server in servers %}
+      <span>{{ server.code }} · {{ server.name }}</span>
+      {% else %}
+      <span>Серверы не добавлены</span>
+      {% endfor %}
+    </div>
+  </section>
+</section>
+{% endblock %}

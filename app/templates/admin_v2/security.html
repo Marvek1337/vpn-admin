@@ -1,0 +1,31 @@
+{% extends 'admin_v2/base.html' %}
+{% block title %}Безопасность и аудит{% endblock %}
+{% block content %}
+<section class="page-stack">
+  <section class="panel security-note">
+    <div class="panel-head">
+      <div><span class="eyebrow">Защита</span><h2>Базовая безопасность</h2></div>
+    </div>
+    <p>Сессии подписаны SESSION_SECRET, админские операции пишутся в журнал аудита, конфиги скачиваются только владельцем или администратором, платежный callback проверяет подпись. Для боевого запуска включите HTTPS, nginx rate-limit и закройте прямой порт приложения.</p>
+  </section>
+
+  <section class="panel table-card">
+    <div class="panel-head">
+      <div><span class="eyebrow">Аудит</span><h2>Журнал действий</h2></div>
+      <span class="panel-count">{{ logs|length }} записей</span>
+    </div>
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>ID</th><th>Админ</th><th>Действие</th><th>Сущность</th><th>IP</th><th>Дата</th><th>Данные</th></tr></thead>
+        <tbody>
+          {% for l in logs %}
+          <tr><td>#{{ l.id }}</td><td>{{ l.admin_id }}</td><td>{{ l.action }}</td><td>{{ l.entity_type or '—' }} {{ l.entity_id or '' }}</td><td>{{ l.ip_address or '—' }}</td><td>{{ l.created_at.strftime('%d.%m.%Y %H:%M') }}</td><td class="small">{{ l.payload or '—' }}</td></tr>
+          {% else %}
+          <tr><td colspan="7">Событий пока нет</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+</section>
+{% endblock %}

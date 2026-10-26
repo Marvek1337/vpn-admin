@@ -1,0 +1,12 @@
+.venv
+.idea
+.DS_Store
+__pycache__
+*.pyc
+app.db
+*.sqlite
+*.sqlite3
+.env
+.env.*
+!.env.example
+data

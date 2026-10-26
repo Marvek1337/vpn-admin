@@ -1,0 +1,26 @@
+{% extends 'admin_v2/base.html' %}
+{% block title %}Платежка{% endblock %}
+{% block content %}
+<section class="settings-page-grid">
+  <article class="panel settings-card settings-main-card">
+    <div class="panel-head">
+      <div><span class="eyebrow">Payments</span><h2>Platega</h2></div>
+    </div>
+    <p class="small">Платежные настройки отвечают за создание ссылок оплаты и прием callback о подтверждении платежа.</p>
+    <form class="server-form" method="post" action="/admin/settings/payments">
+      <label class="check"><input type="checkbox" name="platega_enabled" value="1" {% if app_settings.get('platega_enabled') == 'true' %}checked{% endif %}> Platega включена</label>
+      <label><span>Platega URL</span><input name="platega_base_url" value="{{ app_settings.get('platega_base_url', 'https://app.platega.io') }}" placeholder="https://app.platega.io"></label>
+      <label><span>Merchant ID</span><input name="platega_merchant_id" value="{{ app_settings.get('platega_merchant_id', '') }}" placeholder="merchant id"></label>
+      <label><span>Secret</span><input name="platega_secret" value="{{ app_settings.get('platega_secret', '') }}" placeholder="secret"></label>
+      <label><span>Метод по умолчанию</span><select name="platega_payment_method">
+        <option value="2" {% if app_settings.get('platega_payment_method', '2') == '2' %}selected{% endif %}>СБП / QR</option>
+        <option value="11" {% if app_settings.get('platega_payment_method') == '11' %}selected{% endif %}>Банковская карта</option>
+        <option value="13" {% if app_settings.get('platega_payment_method') == '13' %}selected{% endif %}>Криптовалюта</option>
+      </select></label>
+      <label><span>Валюта</span><input name="platega_currency" value="{{ app_settings.get('platega_currency', 'RUB') }}" placeholder="RUB"></label>
+      <label><span>Callback secret</span><input name="platega_callback_secret" value="{{ app_settings.get('platega_callback_secret', '') }}" placeholder="секрет callback"></label>
+      <button>Сохранить платежку</button>
+    </form>
+  </article>
+</section>
+{% endblock %}

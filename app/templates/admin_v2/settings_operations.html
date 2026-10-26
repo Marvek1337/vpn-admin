@@ -1,0 +1,16 @@
+{% extends 'admin_v2/base.html' %}
+{% block title %}Операции{% endblock %}
+{% block content %}
+<section class="settings-page-grid">
+  <article class="panel settings-card settings-main-card">
+    <div class="panel-head">
+      <div><span class="eyebrow">Автоматизация</span><h2>Grace-период и очистка</h2></div>
+    </div>
+    <p class="small">Сервис показывает конфиги после окончания срока в течение grace-периода. Очистка удаляет клиента на WG-Easy только после этого буфера.</p>
+    <form class="server-form" method="post" action="/admin/settings/operations">
+      <label><span>Дней на оплату после окончания</span><input name="expired_config_grace_days" type="number" min="0" value="{{ app_settings.get('expired_config_grace_days', '1') }}"></label>
+      <button>Сохранить операции</button>
+    </form>
+  </article>
+</section>
+{% endblock %}

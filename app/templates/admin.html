@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+{% block content %}
+<section class="client-board">
+  {% if message %}<div class="alert success span-12">{{ message }}</div>{% endif %}
+
+  <article class="access-card home-hero span-8">
+    <div>
+      <span class="eyebrow">Старая панель</span>
+      <h1>Старая админка заменена новой панелью</h1>
+      <p>Все рабочие операции перенесены в современный раздел `/admin`: статистика, пользователи, заказы, конфиги, серверы, импорт старой базы, Telegram и мониторинг свободных IP.</p>
+      <div class="hero-actions">
+        <a class="btn primary" href="/admin">Открыть новую админку</a>
+        <a class="btn quiet" href="/cabinet">Перейти в кабинет</a>
+      </div>
+    </div>
+    <div class="home-graph" aria-hidden="true"><span></span><span></span><span></span><span></span></div>
+  </article>
+
+  <aside class="access-card span-4 metric-stack">
+    <div class="metric-card compact accent-cyan"><span class="metric-label">Пользователи</span><strong>{{ users|length }}</strong><small>найдено</small></div>
+    <div class="metric-card compact accent-green"><span class="metric-label">Заказы</span><strong>{{ orders|length }}</strong><small>последние 200</small></div>
+    <div class="metric-card compact accent-red"><span class="metric-label">Конфиги</span><strong>{{ configs|length }}</strong><small>последние 200</small></div>
+  </aside>
+</section>
+{% endblock %}

@@ -1,0 +1,17 @@
+{% extends 'admin_v2/base.html' %}
+{% block title %}Telegram{% endblock %}
+{% block content %}
+<section class="settings-page-grid">
+  <article class="panel settings-card settings-main-card">
+    <div class="panel-head">
+      <div><span class="eyebrow">Telegram</span><h2>Привязка и восстановление</h2></div>
+    </div>
+    <p class="small">Токен бота нужен для отправки кодов восстановления пароля. Имя бота используется в подсказках для привязки аккаунта.</p>
+    <form class="server-form" method="post" action="/admin/settings/telegram">
+      <label><span>Токен бота</span><input name="telegram_bot_token" value="{{ app_settings.get('telegram_bot_token', '') }}" placeholder="123456:ABC..."></label>
+      <label><span>Имя бота без @</span><input name="telegram_bot_username" value="{{ app_settings.get('telegram_bot_username', '') }}" placeholder="support_bot"></label>
+      <button>Сохранить Telegram</button>
+    </form>
+  </article>
+</section>
+{% endblock %}

@@ -1,0 +1,461 @@
+{% extends 'base.html' %}
+{% block content %}
+<section class="client-board cabinet-board">
+  {% if attached %}<div class="alert success span-12">Покупка привязана к аккаунту и появилась в кабинете.</div>{% endif %}
+  {% if paid %}<div class="alert success span-12">Оплата подтверждена, заказ применён.</div>{% endif %}
+  {% if note_saved %}<div class="alert success span-12">Заметка к конфигу сохранена.</div>{% endif %}
+  {% if profile_saved %}<div class="alert success span-12">Пароль успешно изменён.</div>{% endif %}
+  {% if telegram_saved %}<div class="alert success span-12">Telegram привязан к аккаунту.</div>{% endif %}
+  {% if telegram_code %}<div class="alert success span-12">Код привязки Telegram: <strong class="mono">{{ telegram_code }}</strong>. Отправьте его вашему боту поддержки.</div>{% endif %}
+  {% if profile_error %}<div class="alert danger span-12">{{ profile_error }}</div>{% endif %}
+
+  <article class="access-card cabinet-hero span-8">
+    <div>
+      <span class="eyebrow">Личный кабинет</span>
+      <h1>Привет, {{ user.username }}</h1>
+      <p>Создавайте заказы, продлевайте доступы, скачивайте конфиги и управляйте Telegram-привязкой без ручной поддержки.</p>
+      <div class="hero-actions">
+        <a class="btn primary" href="#buy-access">Новый заказ</a>
+        <a class="btn quiet" href="#my-configs">Мои конфиги</a>
+        <button class="btn quiet" type="button" onclick="openProfileModal()">Профиль</button>
+      </div>
+    </div>
+    <div class="home-graph" aria-hidden="true"><span></span><span></span><span></span><span></span></div>
+  </article>
+
+  <aside class="access-card span-4 account-summary">
+    <div class="panel-head">
+      <div><span class="eyebrow">Аккаунт</span><h2>Быстрый обзор</h2></div>
+    </div>
+    <div class="summary-grid">
+      <div class="metric-card compact accent-cyan"><span class="metric-label">Конфиги</span><strong>{{ configs|length }}</strong><small>в кабинете</small></div>
+      <div class="metric-card compact accent-green"><span class="metric-label">Активные</span><strong>{{ configs|selectattr('is_active')|list|length }}</strong><small>готовы к работе</small></div>
+      <div class="metric-card compact accent-blue"><span class="metric-label">Заказы</span><strong>{{ orders|length }}</strong><small>в истории</small></div>
+      <div class="metric-card compact accent-red"><span class="metric-label">Оплачено</span><strong>{{ orders|selectattr('status', 'equalto', 'paid')|list|length }}</strong><small>успешных оплат</small></div>
+    </div>
+  </aside>
+
+  <article class="access-card span-7" id="buy-access">
+    <div class="panel-head">
+      <div><span class="eyebrow">Новый доступ</span><h2>Создать заказ</h2></div>
+      <button class="btn quiet ping-button" type="button" onclick="checkServerPing()">Проверить пинг</button>
+    </div>
+    <form method="post" action="/orders/create" class="order-form">
+      <label>
+        <span>Сервер</span>
+        <select name="server_id" id="serverSelect" required>
+          {% for group in runtime.sellable_server_groups %}
+            {% if group.options|length > 1 %}
+            <optgroup label="{{ group.name }} · рекомендуем {{ group.recommended_code }}">
+              {% for server in group.options %}
+              <option value="{{ server.id }}" {% if server.recommended %}selected{% endif %}>
+                {% if server.recommended %}Рекомендуется · {% endif %}{{ server.label }}
+              </option>
+              {% endfor %}
+            </optgroup>
+            {% else %}
+              {% for server in group.options %}
+              <option value="{{ server.id }}">{{ server.label }}</option>
+              {% endfor %}
+            {% endif %}
+          {% else %}
+          <option value="" disabled selected>Нет доступных серверов</option>
+          {% endfor %}
+        </select>
+      </label>
+      <label>
+        <span>Срок</span>
+        <select name="period_key">
+          {% for key, label in runtime.period_labels.items() %}
+          <option value="{{ key }}">{{ label }} — {{ runtime.period_prices[key] }} ₽</option>
+          {% endfor %}
+        </select>
+      </label>
+      <button class="btn primary full" type="submit" {% if not runtime.sellable_server_groups %}disabled{% endif %}>Перейти к оплате</button>
+    </form>
+    <div class="ping-results hidden" id="pingResults" aria-live="polite"></div>
+  </article>
+
+  <article class="access-card span-5">
+    <div class="panel-head">
+      <div><span class="eyebrow">Возможности</span><h2>Что доступно</h2></div>
+    </div>
+    <div class="feature-list">
+      <div class="feature-item"><span><svg><use href="#i-server"></use></svg></span><div><strong>{{ runtime.server_names|length }} локации</strong><p>Серверы доступны для новых заказов и продлений.</p></div></div>
+      <div class="feature-item"><span><svg><use href="#i-plans"></use></svg></span><div><strong>{{ runtime.period_labels|length }} периодов</strong><p>Продление выбирается прямо в карточке конфига.</p></div></div>
+      <div class="feature-item"><span><svg><use href="#i-note"></use></svg></span><div><strong>Заметки к конфигам</strong><p>Подписывайте доступы под устройство или клиента.</p></div></div>
+    </div>
+  </article>
+
+  <section class="access-card configs-section span-12" id="my-configs">
+    <div class="panel-head">
+      <div><span class="eyebrow">Мои конфиги</span><h2>Выданные доступы</h2></div>
+    </div>
+    <div class="configs-grid">
+      {% set visible_configs = [] %}
+      {% for c in configs %}
+        {% if c.is_active and (not c.expires_at or c.expires_at > now) %}
+          {% set _ = visible_configs.append(c) %}
+        {% endif %}
+      {% endfor %}
+
+      {% if visible_configs %}
+      {% for c in visible_configs %}
+      <article class="config-card">
+        <div class="config-main-row">
+          <div>
+            <div class="config-server">{{ runtime.server_names.get(c.server_id, c.server_id) }}</div>
+            <h3>{{ c.config_name }}</h3>
+            <div class="mono config-code">{{ c.unique_code }}</div>
+            <div class="config-meta">Серверный код: {{ c.server_id }}</div>
+          </div>
+          <div class="config-side-actions">
+            {% if c.expires_at %}
+              {% if c.expires_at > now %}
+              <span class="badge success">До {{ c.expires_at.strftime('%d.%m.%Y') }}</span>
+              {% else %}
+              <span class="badge danger">Истек {{ c.expires_at.strftime('%d.%m.%Y') }}</span>
+              {% endif %}
+            {% else %}
+            <span class="badge success">Без срока</span>
+            {% endif %}
+            <div class="action-row">
+              <a class="btn quiet" href="/configs/my/{{ c.id }}/download">Скачать</a>
+              <button class="btn quiet" type="button" onclick="openQr({{ c.id }})">QR</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="config-card-bottom-grid">
+          <form method="post" action="/configs/my/{{ c.id }}/note" class="config-note-form">
+            <label for="note-{{ c.id }}"><span>Моя заметка</span><input id="note-{{ c.id }}" type="text" name="note" placeholder="Например: роутер, телефон, ноутбук" value="{{ c.user_note or '' }}"></label>
+            <button class="btn quiet" type="submit">Сохранить</button>
+          </form>
+          <form method="post" action="/orders/renew/{{ c.id }}" class="renew-inline">
+            <label>
+              <span>Продление</span>
+              <select name="period_key">
+                {% for key, label in runtime.period_labels.items() %}
+                <option value="{{ key }}">{{ label }} — {{ runtime.period_prices[key] }} ₽</option>
+                {% endfor %}
+              </select>
+            </label>
+            <button class="btn primary full" type="submit">Продлить</button>
+          </form>
+        </div>
+      </article>
+      {% endfor %}
+      {% else %}
+      <div class="empty-state">
+        <h3>Пока нет активных конфигов</h3>
+        <p>Активные доступы появятся здесь после оплаты или продления.</p>
+      </div>
+      {% endif %}
+    </div>
+  </section>
+
+  <section class="access-card table-card span-12">
+    <div class="panel-head"><div><span class="eyebrow">История</span><h2>Мои заказы</h2></div></div>
+    <div class="table-scroll">
+      <table>
+        <thead>
+        <tr><th>ID</th><th>Дата</th><th>Сервер</th><th>Назначение</th><th>Срок</th><th>Сумма</th><th>Статус</th><th>Действие</th></tr>
+        </thead>
+        <tbody>
+          {% for o in orders %}
+          <tr>
+            <td>#{{ o.id }}</td>
+            <td>{{ o.created_at.strftime('%d.%m.%Y %H:%M') }}</td>
+            <td>{{ runtime.server_names.get(o.server_id, o.server_id) }}</td>
+            <td>{% if o.source == 'ggsel_claim' %}Активация покупки{% elif o.action == 'renew' %}Продление{% else %}Новый конфиг{% endif %}</td>
+            <td>{{ runtime.period_labels.get(o.period_key, o.period_key) }}</td>
+            <td>{% if o.source == 'ggsel_claim' %}GGSEL{% else %}{{ o.amount|int }} ₽{% endif %}</td>
+            <td><span class="badge {% if o.status == 'paid' %}success{% elif o.status == 'canceled' %}danger{% else %}warn{% endif %}">{{ o.status }}{% if o.applied_at %} / применён{% endif %}</span></td>
+            <td>
+              {% if o.status == 'new' %}
+              <button class="btn quiet" type="button" onclick="openPaymentModal({{ o.id }})">Оплатить</button>
+              {% elif o.applied_at %}
+              {{ o.applied_at.strftime('%d.%m.%Y %H:%M') }}
+              {% else %}—{% endif %}
+            </td>
+          </tr>
+          {% else %}
+          <tr><td colspan="8">Заказов пока нет.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+</section>
+
+<div id="profileModal" class="modal hidden" onclick="closeProfileModal(event)">
+  <div class="modal-card profile-modal-card">
+    <div class="panel-head">
+      <div><span class="eyebrow">Профиль</span><h3>Настройки пользователя</h3></div>
+      <button class="icon-btn" type="button" onclick="hideProfileModal()" aria-label="Закрыть"><svg><use href="#i-close"></use></svg></button>
+    </div>
+    <div class="profile-modal-meta">Логин: {{ user.username }}{% if user.telegram_id %} · Telegram: {{ user.telegram_id }}{% endif %}</div>
+    <form method="post" action="/auth/telegram/update" class="form-stack telegram-bind-form">
+      <label><span>Telegram ID</span><input name="telegram_id" value="{{ user.telegram_id or '' }}" placeholder="Например: 123456789"></label>
+      <button class="btn quiet" type="submit">Привязать Telegram</button>
+    </form>
+    <form method="post" action="/auth/telegram/link-code" class="form-stack telegram-bind-form">
+      <p>Если подключен Telegram-бот, сгенерируйте код и отправьте его боту. После подтверждения бот привяжет ваш Telegram ID к аккаунту.</p>
+      <button class="btn quiet" type="submit">Сгенерировать код привязки</button>
+    </form>
+    <form method="post" action="/auth/change-password" class="form-stack">
+      <label><span>Текущий пароль</span><input type="password" name="current_password" required></label>
+      <label><span>Новый пароль</span><input type="password" name="new_password" required minlength="6"></label>
+      <label><span>Повтор нового пароля</span><input type="password" name="new_password_repeat" required minlength="6"></label>
+      <button class="btn primary" type="submit">Сменить пароль</button>
+    </form>
+  </div>
+</div>
+
+<div id="paymentModal" class="modal hidden" onclick="closePaymentModal(event)">
+  <div class="modal-card qr-modal-card payment-modal-card">
+    <div class="panel-head"><h3>Выберите способ оплаты</h3><button class="icon-btn" type="button" onclick="hidePaymentModal()" aria-label="Закрыть"><svg><use href="#i-close"></use></svg></button></div>
+    <form class="form-stack" onsubmit="startSelectedPayment(event)">
+      <label>
+        <span>Метод оплаты</span>
+        <select id="paymentMethod">
+          {% for method_key, method_label in runtime.payment_methods.items() %}
+          <option value="{{ method_key }}" {% if method_key == runtime.default_payment_method %}selected{% endif %}>{{ method_label }}</option>
+          {% endfor %}
+        </select>
+      </label>
+      <button class="btn primary full payment-option" type="submit">Перейти к оплате</button>
+    </form>
+  </div>
+</div>
+
+<div id="qrModal" class="modal hidden" onclick="closeQr(event)">
+  <div class="modal-card qr-modal-card">
+    <div class="panel-head"><h3>QR-конфиг</h3><button class="icon-btn" type="button" onclick="hideModal('qrModal')" aria-label="Закрыть"><svg><use href="#i-close"></use></svg></button></div>
+    <div class="qr-modal-wrap"><img id="qrImage" class="qr-modal" alt="QR"></div>
+  </div>
+</div>
+
+<script>
+function lockBody() { document.body.classList.add('modal-open'); }
+function unlockBody() {
+  if (!document.querySelector('.modal:not(.hidden)')) document.body.classList.remove('modal-open');
+}
+function showModal(id) { document.getElementById(id).classList.remove('hidden'); lockBody(); }
+function hideModal(id) { document.getElementById(id).classList.add('hidden'); unlockBody(); }
+function openProfileModal() { showModal('profileModal'); }
+function hideProfileModal() { hideModal('profileModal'); }
+function closeProfileModal(e) { if (e.target.id === 'profileModal') hideProfileModal(); }
+
+async function openQr(configId) {
+  const res = await fetch(`/configs/my/${configId}/qr`);
+  const data = await res.json();
+  document.getElementById('qrImage').src = data.qr;
+  showModal('qrModal');
+}
+function closeQr(e) { if (e.target.id === 'qrModal') hideModal('qrModal'); }
+
+let currentOrderId = null;
+function openPaymentModal(orderId) { currentOrderId = orderId; showModal('paymentModal'); }
+function hidePaymentModal() { hideModal('paymentModal'); currentOrderId = null; }
+function closePaymentModal(e) { if (e.target.id === 'paymentModal') hidePaymentModal(); }
+document.addEventListener('keydown', function(e){
+  if (e.key === 'Escape') {
+    ['profileModal','paymentModal','qrModal'].forEach(id => document.getElementById(id)?.classList.add('hidden'));
+    document.body.classList.remove('modal-open');
+  }
+});
+async function startPayment(method) {
+  if (!currentOrderId) return;
+  const buttons = document.querySelectorAll('.payment-option');
+  buttons.forEach(btn => btn.disabled = true);
+  const formData = new FormData();
+  formData.append('method', method);
+  try {
+    const response = await fetch(`/orders/${currentOrderId}/payment-link`, { method: 'POST', body: formData });
+    const data = await response.json();
+    if (!response.ok) { alert(data.detail || 'Ошибка создания оплаты'); buttons.forEach(btn => btn.disabled = false); return; }
+    if (data.redirect) { window.location.href = data.redirect; return; }
+    alert('Платёжная ссылка не получена');
+  } catch (e) { alert('Ошибка соединения с сервером'); }
+  buttons.forEach(btn => btn.disabled = false);
+}
+function startSelectedPayment(event) {
+  event.preventDefault();
+  startPayment(document.getElementById('paymentMethod').value);
+}
+
+async function checkServerPing() {
+  const button = document.querySelector('.ping-button');
+  const box = document.getElementById('pingResults');
+  const select = document.getElementById('serverSelect');
+  if (!button || !box || !select) return;
+
+  const originalText = button.textContent;
+  button.disabled = true;
+  button.textContent = 'Проверяем...';
+  box.classList.remove('hidden');
+  box.innerHTML = '<div class="ping-row muted">Проверяем доступность серверов...</div>';
+
+  try {
+    const response = await fetch('/api/servers/ping', { headers: { 'Accept': 'application/json' } });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.detail || 'Не удалось проверить пинг');
+
+    box.innerHTML = '';
+    const items = data.items || [];
+    if (!items.length) {
+      box.innerHTML = '<div class="ping-row muted">Активные серверы не найдены.</div>';
+      return;
+    }
+
+    box.innerHTML = items.map(item => `
+      <div class="ping-row muted" data-ping-server="${escapeHtml(item.id)}">
+        <div><strong>${escapeHtml(item.label)}</strong><small>${item.ping_url ? 'замеряем с вашего устройства' : escapeHtml(item.error || 'URL не настроен')}</small></div>
+        <span>...</span>
+        <button type="button" class="btn quiet" disabled>Выбрать</button>
+      </div>
+    `).join('');
+
+    const measured = await Promise.all(items.map(measureBrowserPing));
+    measured.sort((a, b) => {
+      if (a.ok !== b.ok) return a.ok ? -1 : 1;
+      return (a.latency_ms || 999999) - (b.latency_ms || 999999);
+    });
+
+    const recommended = measured.find(item => item.ok && select.querySelector(`option[value="${cssEscapeValue(item.id)}"]`));
+    box.innerHTML = '';
+    for (const item of measured) {
+      item.recommended = Boolean(recommended && recommended.id === item.id);
+      const row = document.createElement('div');
+      row.className = `ping-row ${item.ok ? 'ok' : 'bad'}`;
+
+      const title = document.createElement('div');
+      title.innerHTML = `<strong>${escapeHtml(item.label)}</strong><small>${escapeHtml(pingStatusText(item))}</small>`;
+
+      const latency = document.createElement('span');
+      latency.textContent = item.ok ? `${item.latency_ms} ms` : 'нет ответа';
+
+      const choose = document.createElement('button');
+      choose.type = 'button';
+      choose.className = 'btn quiet';
+      choose.textContent = 'Выбрать';
+      choose.disabled = !item.ok || !select.querySelector(`option[value="${cssEscapeValue(item.id)}"]`);
+      choose.addEventListener('click', () => {
+        select.value = item.id;
+        select.dispatchEvent(new Event('change', { bubbles: true }));
+      });
+
+      row.append(title, latency, choose);
+      box.append(row);
+    }
+
+    if (recommended) {
+      select.value = recommended.id;
+    }
+  } catch (error) {
+    box.innerHTML = `<div class="ping-row bad"><strong>Ошибка проверки</strong><span>${error.message || 'повторите позже'}</span></div>`;
+  } finally {
+    button.disabled = false;
+    button.textContent = originalText;
+  }
+}
+
+function cssEscapeValue(value) {
+  if (window.CSS && typeof window.CSS.escape === 'function') return CSS.escape(String(value));
+  return String(value).replace(/"/g, '\\"');
+}
+function escapeHtml(value) {
+  return String(value).replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+}
+function pingUrlWithCacheBust(rawUrl) {
+  const url = new URL(rawUrl, window.location.href);
+  url.searchParams.set('_client_ping', `${Date.now()}-${Math.random().toString(16).slice(2)}`);
+  return url.toString();
+}
+function isMixedContentPing(rawUrl) {
+  try {
+    const url = new URL(rawUrl, window.location.href);
+    return window.location.protocol === 'https:' && url.protocol !== 'https:';
+  } catch (error) {
+    return false;
+  }
+}
+function pingStatusText(item) {
+  if (item.ok) {
+    return item.recommended ? 'Лучший отклик с вашего устройства' : `${item.code} · замер с вашего устройства`;
+  }
+  const reasons = {
+    mixed_content: 'нужен HTTPS URL',
+    timeout: 'таймаут',
+    browser_blocked: 'браузер заблокировал URL',
+    network_error: 'ошибка сети или сертификата',
+    invalid_url: 'URL не настроен',
+  };
+  return `${item.code} · ${reasons[item.error] || item.error || 'нет ответа'}`;
+}
+async function measureBrowserPing(item) {
+  if (!item.ping_url) return { ...item, ok: false, latency_ms: null, error: item.error || 'invalid_url' };
+  if (isMixedContentPing(item.ping_url)) return { ...item, ok: false, latency_ms: null, error: 'mixed_content' };
+
+  const fetchResult = await measureFetchPing(item);
+  if (fetchResult.ok) return fetchResult;
+  const resourceResult = await measureResourcePing(item);
+  if (resourceResult.ok) return resourceResult;
+  return { ...item, ok: false, latency_ms: null, error: fetchResult.error || resourceResult.error || 'network_error' };
+}
+async function measureFetchPing(item) {
+  const controller = new AbortController();
+  const timeout = window.setTimeout(() => controller.abort(), 3500);
+  const started = performance.now();
+  try {
+    await fetch(pingUrlWithCacheBust(item.ping_url), {
+      method: 'GET',
+      mode: 'no-cors',
+      cache: 'no-store',
+      credentials: 'omit',
+      signal: controller.signal,
+    });
+    return { ...item, ok: true, latency_ms: Math.max(Math.round(performance.now() - started), 1), error: '' };
+  } catch (error) {
+    return { ...item, ok: false, latency_ms: null, error: error && error.name === 'AbortError' ? 'timeout' : 'network_error' };
+  } finally {
+    window.clearTimeout(timeout);
+  }
+}
+function measureResourcePing(item) {
+  return new Promise(resolve => {
+    const started = performance.now();
+    const url = pingUrlWithCacheBust(item.ping_url);
+    let done = false;
+    const finish = (ok, error = '') => {
+      if (done) return;
+      done = true;
+      window.clearTimeout(timer);
+      resolve({
+        ...item,
+        ok,
+        latency_ms: ok ? Math.max(Math.round(performance.now() - started), 1) : null,
+        error,
+      });
+    };
+    const timer = window.setTimeout(() => finish(false, 'timeout'), 3500);
+    const img = new Image();
+    img.referrerPolicy = 'no-referrer';
+    img.onload = () => finish(true, '');
+    img.onerror = () => {
+      window.setTimeout(() => {
+        const entry = performance.getEntriesByName(url).pop();
+        if (entry && entry.responseEnd > 0 && entry.duration < 3500) {
+          finish(true, '');
+        } else {
+          finish(false, 'browser_blocked');
+        }
+      }, 0);
+    };
+    img.src = url;
+  });
+}
+</script>
+{% if open_payment_for %}<script>document.addEventListener('DOMContentLoaded', function () { openPaymentModal({{ open_payment_for }}); });</script>{% endif %}
+{% endblock %}

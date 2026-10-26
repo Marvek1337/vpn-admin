@@ -1,0 +1,89 @@
+{% extends "admin_v2/base.html" %}
+{% block title %}Свободные места{% endblock %}
+{% block content %}
+<section class="page-stack">
+  <div class="toolbar">
+    <form method="post" action="/admin/monitoring/check-all"><button>Проверить все</button></form>
+    <form method="post" action="/admin/monitoring/cleanup-expired"><button>Очистить просроченные</button></form>
+    <a href="/admin/servers">Настроить серверы</a>
+    <span class="toolbar-note">Проверка считает адреса в подсети WG-Easy: всего, занято и свободно.</span>
+  </div>
+
+  <section class="metrics-row">
+    <div class="metric-card accent-blue"><span class="metric-label">Серверов</span><strong>{{ totals.total_servers }}</strong><small>в настройках</small></div>
+    <div class="metric-card accent-green"><span class="metric-label">Доступно</span><strong>{{ totals.online_servers }}</strong><small>доступны сейчас</small></div>
+    <div class="metric-card accent-cyan"><span class="metric-label">Всего IP</span><strong>{{ totals.total_ips }}</strong><small>по подсетям</small></div>
+    <div class="metric-card accent-red"><span class="metric-label">Свободно IP</span><strong>{{ totals.total_free }}</strong><small>для продаж</small></div>
+  </section>
+
+<section class="panel table-card capacity-table">
+  <div class="panel-head">
+    <div>
+      <h2>Статистика свободных мест WG-Easy</h2>
+      <p class="small">Список показывает только активные серверы. Если сервер недоступен или не заполнены URL/логин/пароль/подсеть, ошибка будет видна в строке.</p>
+    </div>
+  </div>
+  <div class="table-scroll">
+  <table>
+    <thead>
+      <tr>
+        <th>Сервер</th>
+        <th>URL</th>
+        <th>Подсеть</th>
+        <th>Всего</th>
+        <th>Занято</th>
+        <th>Свободно</th>
+        <th>Статус</th>
+        <th>Действия</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in items %}
+      <tr>
+        <td>
+          <strong>{{ item.name }}</strong>
+          <div class="mono">{{ item.id }}</div>
+        </td>
+        <td class="mono">{{ item.url or '—' }}</td>
+        <td class="mono">{{ item.subnet or '—' }}</td>
+        <td>{{ item.total }}</td>
+        <td>{{ item.used }}</td>
+        <td><strong>{{ item.free }}</strong></td>
+        <td>
+          {% if item.online %}
+            <span class="pill {% if item.sellable %}paid{% else %}warn{% endif %}">
+              {% if item.sellable %}доступен{% else %}мало мест{% endif %}
+            </span>
+          {% else %}
+            <span class="pill canceled">ошибка</span>
+            <div class="small">{{ item.error }}</div>
+          {% endif %}
+        </td>
+        <td>
+          <div class="actions">
+            <form method="post" action="/admin/monitoring/{{ item.db_id }}/check"><button>Проверить</button></form>
+            <form method="post" action="/admin/monitoring/{{ item.db_id }}/cleanup"><button>Очистить</button></form>
+          </div>
+        </td>
+      </tr>
+      {% else %}
+      <tr><td colspan="8">Активные серверы не добавлены.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  </div>
+</section>
+
+<section class="panel">
+  <h2>Итого</h2>
+  <div class="meta-grid">
+    <span>Серверов в настройках: {{ totals.total_servers }}</span>
+    <span>Доступно серверов: {{ totals.online_servers }}</span>
+    <span>С ошибками: {{ totals.errors }}</span>
+    <span>Всего IP: {{ totals.total_ips }}</span>
+    <span>Занято IP: {{ totals.total_used }}</span>
+    <span>Свободно IP: {{ totals.total_free }}</span>
+  </div>
+</section>
+</section>
+{% endblock %}

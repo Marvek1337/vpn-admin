@@ -1,0 +1,24 @@
+{% extends 'admin_v2/base.html' %}
+{% block title %}Настройки{% endblock %}
+{% block content %}
+<section class="settings-hub">
+  <article class="dashboard-card hero-card settings-hero">
+    <div class="hero-copy">
+      <span class="eyebrow">Центр настроек</span>
+      <h2>Настройки разделены по рабочим зонам</h2>
+      <p>Каждая интеграция и сущность вынесена на отдельную страницу, чтобы не смешивать платежи, GGSEL, тарифы, товары и юридические тексты.</p>
+    </div>
+  </article>
+
+  <a class="settings-tile" href="/admin/settings/app"><span><svg><use href="#i-app"></use></svg></span><strong>Основные</strong><small>Бренд, публичный URL, поддержка</small></a>
+  <a class="settings-tile" href="/admin/settings/ggsel"><span><svg><use href="#i-ggsel"></use></svg></span><strong>GGSEL</strong><small>API, seller_id, ключи, endpoint активности</small></a>
+  <a class="settings-tile" href="/admin/settings/payments"><span><svg><use href="#i-payments"></use></svg></span><strong>Платежка</strong><small>Platega, метод оплаты, callback</small></a>
+  <a class="settings-tile" href="/admin/settings/telegram"><span><svg><use href="#i-telegram"></use></svg></span><strong>Telegram</strong><small>Бот, привязка, восстановление пароля</small></a>
+  <a class="settings-tile" href="/admin/settings/operations"><span><svg><use href="#i-operations"></use></svg></span><strong>Операции</strong><small>Grace-период и очистка</small></a>
+  <a class="settings-tile" href="/admin/settings/import"><span><svg><use href="#i-import"></use></svg></span><strong>Импорт</strong><small>Перенос старой базы и конфигов</small></a>
+  <a class="settings-tile" href="/admin/settings/legal"><span><svg><use href="#i-docs"></use></svg></span><strong>Документы</strong><small>Политика и пользовательское соглашение</small></a>
+  <a class="settings-tile" href="/admin/settings/periods"><span><svg><use href="#i-plans"></use></svg></span><strong>Тарифы</strong><small>Периоды доступа и цены</small></a>
+  <a class="settings-tile" href="/admin/settings/products"><span><svg><use href="#i-products"></use></svg></span><strong>Товары GGSEL</strong><small>item_id и маршрутизация по серверам</small></a>
+  <a class="settings-tile" href="/admin/servers"><span><svg><use href="#i-server"></use></svg></span><strong>Серверы</strong><small>WG-Easy, подсети, проверки и очистка</small></a>
+</section>
+{% endblock %}

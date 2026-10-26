@@ -1,0 +1,85 @@
+{% extends 'admin_v2/base.html' %}
+{% block title %}Серверы WG-Easy{% endblock %}
+{% block content %}
+<section class="page-stack">
+  <div class="toolbar">
+    <form method="post" action="/admin/servers/check-all"><button>Проверить все активные</button></form>
+    <form method="post" action="/admin/servers/cleanup-expired"><button>Очистить просроченные</button></form>
+    <span class="toolbar-note">Буфер после окончания: {{ grace_days }} дн. Настраивается в разделе “Операции”.</span>
+  </div>
+
+  <section class="panel">
+    <div class="panel-head">
+      <div>
+        <span class="eyebrow">WG-Easy API</span>
+        <h2>Добавить сервер</h2>
+        <p class="small">WG-Easy URL используется backend для выдачи и очистки клиентов. URL для пинга открывается из браузера пользователя: нужен публичный HTTPS-адрес с валидным сертификатом, без авторизации и без запрета cross-origin ресурсов.</p>
+      </div>
+    </div>
+    <form class="server-form" method="post" action="/admin/servers/create">
+      <label><span>Код</span><input name="code" placeholder="finland-1" required></label>
+      <label><span>Название</span><input name="name" placeholder="Finland #1" required></label>
+      <input type="hidden" name="protocol" value="wg_easy">
+      <label><span>Страна</span><input name="country" placeholder="Finland"></label>
+      <label><span>WG-Easy URL</span><input name="api_url" placeholder="https://wg.example.com"></label>
+      <label><span>URL для пинга пользователя</span><input name="server_host" placeholder="https://fi.example.com/health"></label>
+      <label><span>Логин</span><input name="username" placeholder="admin"></label>
+      <label><span>Пароль</span><input name="password" placeholder="password"></label>
+      <label><span>API токен</span><input name="api_token" placeholder="если используется"></label>
+      <label><span>Подсеть</span><input name="subnet" placeholder="10.8.0.0/24"></label>
+      <label><span>Мин. свободных IP</span><input name="min_free_ips" type="number" value="3" min="0"></label>
+      <label><span>Приоритет</span><input name="priority" type="number" value="100"></label>
+      <label class="check"><input type="checkbox" name="is_active" value="1" checked> Активен</label>
+      <button>Добавить</button>
+    </form>
+  </section>
+
+  <section class="config-list server-admin-list">
+  {% for s in rows %}
+  {% set stat = latest_stats.get(s.code) %}
+  <article class="server-card">
+    <form method="post" action="/admin/servers/{{ s.id }}/update">
+      <div class="server-head">
+        <div>
+          <h3>{{ s.name }}</h3>
+          <p class="mono">{{ s.code }} · WG-Easy</p>
+        </div>
+        <span class="pill {% if s.is_active %}paid{% else %}canceled{% endif %}">{% if s.is_active %}активен{% else %}выключен{% endif %}</span>
+      </div>
+      <div class="meta-grid">
+        <span>Последняя проверка: {% if stat %}{{ stat.created_at.strftime('%d.%m.%Y %H:%M') }}{% else %}—{% endif %}</span>
+        <span>Онлайн: {% if stat %}{% if stat.online %}да{% else %}нет{% endif %}{% else %}—{% endif %}</span>
+        <span>Свободные IP: {% if stat and stat.free_ips is not none %}{{ stat.free_ips }}{% else %}—{% endif %}</span>
+        <span>Клиентов: {% if stat %}{{ stat.total_clients }}{% else %}—{% endif %}</span>
+        <span>Пинг URL: {{ s.server_host or s.api_url or s.panel_url or '—' }}</span>
+        <span>Мин. свободных: {{ s.min_free_ips }}</span>
+        <span>Ошибка: {% if stat and stat.error %}{{ stat.error }}{% else %}—{% endif %}</span>
+      </div>
+      <div class="server-form edit">
+        <label><span>Название</span><input name="name" value="{{ s.name }}"></label>
+        <input type="hidden" name="protocol" value="wg_easy">
+        <label><span>Страна</span><input name="country" value="{{ s.country or '' }}" placeholder="Страна"></label>
+        <label><span>WG-Easy URL</span><input name="api_url" value="{{ s.api_url or s.panel_url or '' }}" placeholder="WG-Easy URL"></label>
+        <label><span>URL для пинга пользователя</span><input name="server_host" value="{{ s.server_host or '' }}" placeholder="https://fi.example.com/health"></label>
+        <label><span>Логин</span><input name="username" value="{{ s.username or '' }}" placeholder="Логин"></label>
+        <label><span>Новый пароль</span><input name="password" placeholder="оставить пустым"></label>
+        <label><span>Новый токен</span><input name="api_token" placeholder="оставить пустым"></label>
+        <label><span>Подсеть</span><input name="subnet" value="{{ s.subnet or '' }}" placeholder="10.8.0.0/24"></label>
+        <label><span>Мин. свободных IP</span><input name="min_free_ips" type="number" value="{{ s.min_free_ips }}" min="0"></label>
+        <label><span>Приоритет</span><input name="priority" type="number" value="{{ s.priority }}"></label>
+        <label class="check"><input type="checkbox" name="is_active" value="1" {% if s.is_active %}checked{% endif %}> Активен</label>
+        <button>Сохранить</button>
+      </div>
+    </form>
+    <div class="actions">
+      <form method="post" action="/admin/servers/{{ s.id }}/check"><button>Проверить</button></form>
+      <form method="post" action="/admin/servers/{{ s.id }}/cleanup"><button>Очистить</button></form>
+      <form method="post" action="/admin/servers/{{ s.id }}/delete" onsubmit="return confirm('Удалить сервер из админки? Клиенты на панели не удаляются.');"><button>Удалить</button></form>
+    </div>
+  </article>
+  {% else %}
+  <article class="server-card">Серверы не добавлены</article>
+  {% endfor %}
+  </section>
+</section>
+{% endblock %}

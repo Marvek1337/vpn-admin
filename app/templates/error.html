@@ -1,0 +1,36 @@
+{% set brand = runtime.app.brand if runtime is defined and runtime.app is defined else 'vpn-admin' %}
+{% set support_url = runtime.app.support_url if runtime is defined and runtime.app is defined else '' %}
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ status_code }} · {{ brand }}</title>
+  <meta name="robots" content="noindex">
+  <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/static/css/client_v2.css?v=care-9">
+</head>
+<body class="client-ui error-standalone">
+{% include '_icons.html' %}
+<main class="error-shell">
+  <section class="error-card">
+    <a class="brand-block error-brand" href="/" aria-label="{{ brand }}">
+      <span class="brand-mark">{{ brand[:1]|upper }}</span>
+      <span class="brand-copy">
+        <strong>{{ brand }}</strong>
+        <small>Сервис доступа</small>
+      </span>
+    </a>
+    <span class="error-code">{{ status_code }}</span>
+    <h1>{{ title }}</h1>
+    <p>{{ message }}</p>
+    <div class="error-actions">
+      <button class="btn primary" type="button" onclick="history.length > 1 ? history.back() : location.assign('/')">Вернуться назад</button>
+      <a class="btn quiet" href="/cabinet">Открыть кабинет</a>
+      {% if support_url %}<a class="btn quiet" href="{{ support_url }}">Поддержка</a>{% endif %}
+    </div>
+    <small class="error-path">{{ path }}</small>
+  </section>
+</main>
+</body>
+</html>

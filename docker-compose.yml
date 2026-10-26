@@ -1,0 +1,25 @@
+services:
+  vpn-admin:
+    build: .
+    container_name: vpn-admin
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: sqlite:////app/data/app.db
+      SESSION_SECRET: ${SESSION_SECRET:?Set SESSION_SECRET in .env}
+      JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET in .env}
+      APP_ENV: ${APP_ENV:-dev}
+      PUBLIC_BASE_URL: ${PUBLIC_BASE_URL:-http://127.0.0.1:7005}
+      ALLOW_TEST_PAYMENTS: ${ALLOW_TEST_PAYMENTS:-false}
+      BOT_PAYMENT_CALLBACK_URL: ${BOT_PAYMENT_CALLBACK_URL:-}
+    ports:
+      - "${BIND_ADDRESS:-127.0.0.1}:${APP_PORT:-7005}:8080"
+    volumes:
+      - vpn_data:/app/data
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "--silent", "http://127.0.0.1:8080/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+volumes:
+  vpn_data:

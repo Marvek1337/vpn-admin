@@ -1,0 +1,18 @@
+{% extends 'admin_v2/base.html' %}
+{% block title %}Импорт{% endblock %}
+{% block content %}
+<section class="settings-page-grid">
+  <article class="panel settings-card settings-main-card">
+    <div class="panel-head">
+      <div><span class="eyebrow">Migration</span><h2>Импорт старой базы</h2></div>
+    </div>
+    <p class="small">Укажите путь к старому SQLite-файлу внутри сервера или Docker-контейнера. Импорт переносит пользователей и записи из `vpn_configs`.</p>
+    <form class="server-form" method="post" action="/admin/settings/import-legacy-db">
+      <label><span>Путь к старой базе</span><input name="source_path" placeholder="/app/data/old_app.db" required></label>
+      <label class="check"><input type="checkbox" name="import_users" value="1" checked> Импортировать пользователей</label>
+      <label class="check"><input type="checkbox" name="overwrite_configs" value="1"> Обновлять существующие конфиги</label>
+      <button>Запустить импорт</button>
+    </form>
+  </article>
+</section>
+{% endblock %}

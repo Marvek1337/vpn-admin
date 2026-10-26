@@ -1,0 +1,17 @@
+{% extends 'admin_v2/base.html' %}
+{% block title %}Документы{% endblock %}
+{% block content %}
+<section class="settings-page-grid">
+  <article class="panel settings-card settings-main-card">
+    <div class="panel-head">
+      <div><span class="eyebrow">Legal pages</span><h2>Юридические страницы</h2></div>
+    </div>
+    <p class="small">Тексты публикуются на страницах политики конфиденциальности и пользовательского соглашения. Пишите готовый текст без HTML.</p>
+    <form class="server-form legal-form" method="post" action="/admin/settings/legal">
+      <label><span>Политика конфиденциальности</span><textarea name="privacy_text">{{ app_settings.get('privacy_text', '') }}</textarea></label>
+      <label><span>Пользовательское соглашение</span><textarea name="terms_text">{{ app_settings.get('terms_text', '') }}</textarea></label>
+      <button>Сохранить документы</button>
+    </form>
+  </article>
+</section>
+{% endblock %}

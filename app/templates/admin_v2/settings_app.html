@@ -1,0 +1,18 @@
+{% extends 'admin_v2/base.html' %}
+{% block title %}Основные настройки{% endblock %}
+{% block content %}
+<section class="settings-page-grid">
+  <article class="panel settings-card settings-main-card">
+    <div class="panel-head">
+      <div><span class="eyebrow">Application</span><h2>Бренд и публичные ссылки</h2></div>
+    </div>
+    <p class="small">Эти данные используются в кабинете, документах, платежных ссылках и уведомлениях.</p>
+    <form class="server-form" method="post" action="/admin/settings/app">
+      <label><span>Название продукта</span><input name="brand" value="{{ app_settings.get('brand', '') }}" placeholder="vpn-admin" required></label>
+      <label><span>Ссылка поддержки</span><input name="support_url" value="{{ app_settings.get('support_url', '') }}" placeholder="https://t.me/support"></label>
+      <label><span>Публичный URL сайта</span><input name="public_base_url" value="{{ app_settings.get('public_base_url', '') }}" placeholder="https://vpn.example.com"></label>
+      <button>Сохранить</button>
+    </form>
+  </article>
+</section>
+{% endblock %}

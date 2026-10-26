@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+{% block content %}
+<section class="auth-layout">
+  <div class="access-card auth-copy">
+    <span class="eyebrow">Вход</span>
+    <h1>Продолжите работу в личном кабинете</h1>
+    <p>Заказы, продления, QR-коды и скачивание конфигов собраны в одном интерфейсе.</p>
+  </div>
+  <div class="access-card auth-panel">
+    {% if error %}<div class="alert danger">{{ error }}</div>{% endif %}
+    <form method="post" action="/auth/login" class="form-stack">
+      <input type="hidden" name="next_url" value="{{ next }}">
+      <label><span>Логин</span><input name="username" required autocomplete="username"></label>
+      <label><span>Пароль</span><input name="password" type="password" required autocomplete="current-password"></label>
+      <button class="btn primary full" type="submit">Войти</button>
+    </form>
+    <form method="post" action="/auth/telegram/reset/request" class="form-stack recovery-form">
+      <label><span>Восстановить через Telegram</span><input name="username" placeholder="Логин аккаунта"></label>
+      <button class="btn quiet full" type="submit">Отправить код</button>
+    </form>
+  </div>
+</section>
+{% endblock %}

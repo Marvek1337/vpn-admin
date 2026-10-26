@@ -1,0 +1,48 @@
+{% extends 'admin_v2/base.html' %}
+{% block title %}Заказы{% endblock %}
+{% block content %}
+<section class="page-stack">
+  <form class="toolbar" method="get">
+    <label class="search-field"><span><svg><use href="#i-search"></use></svg></span><input name="q" value="{{ q }}" placeholder="ID, код конфига или платеж"></label>
+    <select name="status">
+      <option value="">Все статусы</option>
+      {% for st in ['new','paid','canceled','error'] %}
+      <option value="{{ st }}" {% if status==st %}selected{% endif %}>{{ st }}</option>
+      {% endfor %}
+    </select>
+    <button>Фильтр</button>
+    <a href="/admin/orders">Сброс</a>
+  </form>
+
+  <section class="panel table-card">
+    <div class="panel-head">
+      <div><span class="eyebrow">Продажи</span><h2>Заказы и платежи</h2></div>
+      <span class="panel-count">{{ rows|length }} записей</span>
+    </div>
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr><th>ID</th><th>Пользователь</th><th>Конфиг</th><th>Сервер</th><th>Действие</th><th>Срок</th><th>Сумма</th><th>Статус</th><th>Ошибка</th></tr>
+        </thead>
+        <tbody>
+          {% for o in rows %}
+          <tr>
+            <td>#{{ o.id }}</td>
+            <td>{{ o.user_id or '—' }}</td>
+            <td>{{ o.config_id or '—' }}</td>
+            <td>{{ o.server_id }}</td>
+            <td>{{ o.action }}</td>
+            <td>{{ o.period_key }}</td>
+            <td>{% if o.amount %}{{ o.amount|int }} ₽{% else %}—{% endif %}</td>
+            <td><span class="pill {{ o.status }}">{{ o.status }}</span></td>
+            <td class="small">{{ o.error_message or '—' }}</td>
+          </tr>
+          {% else %}
+          <tr><td colspan="9">Заказы не найдены</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+</section>
+{% endblock %}
